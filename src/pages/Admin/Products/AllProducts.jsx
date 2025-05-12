@@ -1,21 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiFilter } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 function AllProducts() {
-  // Sample product data - replace with real data from your backend
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Wireless Headphones', category: 'Electronics', price: 99.99, stock: 45, status: 'In Stock' },
-    { id: 2, name: 'Leather Wallet', category: 'Accessories', price: 29.99, stock: 120, status: 'In Stock' },
-    { id: 3, name: 'Smart Watch', category: 'Electronics', price: 199.99, stock: 0, status: 'Out of Stock' },
-    { id: 4, name: 'Cotton T-Shirt', category: 'Clothing', price: 19.99, stock: 78, status: 'In Stock' },
-    { id: 5, name: 'Running Shoes', category: 'Footwear', price: 89.99, stock: 32, status: 'Low Stock' },
-  ]);
-  
-
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+
+  // Fetch products from backend
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/all-products');
+        setProducts(response.data);
+        setLoading(false);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to fetch products');
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Get unique categories for filter dropdown
   const categories = ['All', ...new Set(products.map(product => product.category))];
@@ -25,13 +35,48 @@ function AllProducts() {
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
-    const matchesStatus = selectedStatus === 'All' || product.status === selectedStatus;
+    
+    // Determine stock status
+    let productStatus = 'In Stock';
+    if (product.stock <= 0) {
+      productStatus = 'Out of Stock';
+    } else if (product.stock < 10) { // Assuming low stock threshold is 10
+      productStatus = 'Low Stock';
+    }
+    
+    const matchesStatus = selectedStatus === 'All' || productStatus === selectedStatus;
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const deleteProduct = (id) => {
-    setProducts(products.filter(product => product.id !== id));
+  const deleteProduct = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3000/api/products/${id}`);
+      setProducts(products.filter(product => product._id !== id));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete product');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="p-8 transition-all duration-300">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 transition-all duration-300">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 transition-all duration-300">
@@ -113,41 +158,63 @@ function AllProducts() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredProducts.length > 0 ? (
-                filteredProducts.map(product => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md"></div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                filteredProducts.map(product => {
+                  // Determine stock status
+                  let status = 'In Stock';
+                  if (product.stock <= 0) {
+                    status = 'Out of Stock';
+                  } else if (product.stock < 10) {
+                    status = 'Low Stock';
+                  }
+
+                  return (
+                    <tr key={product._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md overflow-hidden">
+                            {product.image?.url ? (
+                              <img src={product.image.url} alt={product.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center text-gray-400">
+                                <FiShoppingCart />
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                            <div className="text-sm text-gray-500">{product.description?.substring(0, 30)}...</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price.toFixed(2)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.stock}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${product.status === 'In Stock' ? 'bg-green-100 text-green-800' : 
-                          product.status === 'Out of Stock' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                        {product.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button className="text-indigo-600 hover:text-indigo-900">
-                          <FiEdit2 />
-                        </button>
-                        <button 
-                          className="text-red-600 hover:text-red-900"
-                          onClick={() => deleteProduct(product.id)}
-                        >
-                          <FiTrash2 />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price?.toFixed(2)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.stock}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          ${status === 'In Stock' ? 'bg-green-100 text-green-800' : 
+                            status === 'Out of Stock' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                          {status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <Link 
+                            to={`/admin/products/edit/${product._id}`}
+                            className="text-indigo-600 hover:text-indigo-900"
+                          >
+                            <FiEdit2 />
+                          </Link>
+                          <button 
+                            className="text-red-600 hover:text-red-900"
+                            onClick={() => deleteProduct(product._id)}
+                          >
+                            <FiTrash2 />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
@@ -163,7 +230,7 @@ function AllProducts() {
       {/* Pagination */}
       <div className="flex justify-between items-center mt-4">
         <div className="text-sm text-gray-500">
-          Showing <span className="font-medium">1</span> to <span className="font-medium">5</span> of <span className="font-medium">5</span> results
+          Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredProducts.length}</span> of <span className="font-medium">{products.length}</span> results
         </div>
         <div className="flex space-x-2">
           <button className="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
