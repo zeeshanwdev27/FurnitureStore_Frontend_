@@ -1,23 +1,63 @@
-import React, { useState } from 'react';
-import { FiSearch, FiPlus, FiRefreshCw, FiAlertTriangle, FiPackage, FiFilter } from 'react-icons/fi';
-import { MdOutlineInventory2, MdOutlineLowPriority } from 'react-icons/md';
+import React, { useState, useEffect } from 'react';
+import { 
+  FiSearch, 
+  FiPlus, 
+  FiRefreshCw, 
+  FiAlertTriangle, 
+  FiPackage, 
+  FiFilter 
+} from 'react-icons/fi';
+import { 
+  MdOutlineInventory2, 
+  MdOutlineLowPriority 
+} from 'react-icons/md';
+import axios from 'axios';
 
 function Inventory() {
-  // Sample inventory data - replace with real data from your backend
-  const [inventory, setInventory] = useState([
-    { id: 1, product: 'Wireless Headphones', sku: 'WH-1000XM4', category: 'Electronics', currentStock: 45, lowStockThreshold: 10, status: 'In Stock' },
-    { id: 2, product: 'Leather Wallet', sku: 'LW-BLACK-01', category: 'Accessories', currentStock: 3, lowStockThreshold: 5, status: 'Low Stock' },
-    { id: 3, product: 'Smart Watch', sku: 'SW-GALAXY-5', category: 'Electronics', currentStock: 0, lowStockThreshold: 5, status: 'Out of Stock' },
-    { id: 4, product: 'Cotton T-Shirt', sku: 'CT-WHITE-M', category: 'Clothing', currentStock: 78, lowStockThreshold: 15, status: 'In Stock' },
-    { id: 5, product: 'Running Shoes', sku: 'RS-NIKE-42', category: 'Footwear', currentStock: 32, lowStockThreshold: 10, status: 'In Stock' },
-  ]);
-
+  const [inventory, setInventory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [restockItem, setRestockItem] = useState(null);
   const [restockQuantity, setRestockQuantity] = useState('');
+  const [restockError, setRestockError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch products from backend
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/all-products');
+        const inventoryData = response.data.map(product => ({
+          id: product._id,
+          product: product.name,
+          sku: product._id.slice(-6).toUpperCase(),
+          category: product.category,
+          currentStock: product.stock || 0,
+          lowStockThreshold: 10,
+          status: getStockStatus(product.stock || 0, 10),
+          image: product.image || { url: '' }
+        }));
+        setInventory(inventoryData);
+        setLoading(false);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to fetch inventory');
+        setLoading(false);
+      }
+    };
+
+    fetchInventory();
+  }, []);
+
+  // Determine stock status
+  const getStockStatus = (stock, threshold) => {
+    if (stock <= 0) return 'Out of Stock';
+    if (stock <= threshold) return 'Low Stock';
+    return 'In Stock';
+  };
 
   // Get unique categories and statuses for filters
   const categories = ['All', ...new Set(inventory.map(item => item.category))];
@@ -34,35 +74,141 @@ function Inventory() {
 
   const handleRestock = (item) => {
     setRestockItem(item);
+    setRestockQuantity('');
+    setRestockError('');
     setShowRestockModal(true);
   };
 
-  const submitRestock = () => {
-    if (restockItem && restockQuantity) {
-      const updatedInventory = inventory.map(item => {
-        if (item.id === restockItem.id) {
-          const newStock = item.currentStock + parseInt(restockQuantity);
-          return {
-            ...item,
-            currentStock: newStock,
-            status: newStock === 0 ? 'Out of Stock' : 
-                   newStock <= item.lowStockThreshold ? 'Low Stock' : 'In Stock'
-          };
-        }
-        return item;
-      });
-      setInventory(updatedInventory);
+  const submitRestock = async () => {
+    if (!restockItem) {
+      setRestockError('No item selected for restock');
+      return;
+    }
+
+    const quantity = parseInt(restockQuantity);
+    if (isNaN(quantity)) {
+      setRestockError('Please enter a valid number');
+      return;
+    }
+    if (quantity <= 0) {
+      setRestockError('Quantity must be greater than 0');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setRestockError('');
+
+      // Calculate new stock value
+      const updatedStock = restockItem.currentStock + quantity;
+
+      // Use dedicated stock endpoint
+      const response = await axios.put(
+        `http://localhost:3000/api/products/${restockItem.id}/stock`,
+        { stock: updatedStock }
+      );
+
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Stock update failed');
+      }
+
+      // Update local state
+      setInventory(prevInventory => 
+        prevInventory.map(item => 
+          item.id === restockItem.id
+            ? {
+                ...item,
+                currentStock: response.data.newStock || updatedStock,
+                status: getStockStatus(response.data.newStock || updatedStock, item.lowStockThreshold)
+              }
+            : item
+        )
+      );
+
       setShowRestockModal(false);
       setRestockQuantity('');
+    } catch (err) {
+      console.error('Restock error:', err);
+      
+      let errorMessage = 'Failed to update inventory. Please try again.';
+      
+      if (err.response) {
+        if (err.response.data?.error?.details) {
+          errorMessage = Object.values(err.response.data.error.details)
+            .filter(Boolean)
+            .join(', ');
+        } else if (err.response.data?.error) {
+          errorMessage = err.response.data.error;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setRestockError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const refreshInventory = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get('http://localhost:3000/api/all-products');
+      const inventoryData = response.data.map(product => ({
+        id: product._id,
+        product: product.name,
+        sku: product._id.slice(-6).toUpperCase(),
+        category: product.category,
+        currentStock: product.stock || 0,
+        lowStockThreshold: 10,
+        status: getStockStatus(product.stock || 0, 10),
+        image: product.image || { url: '' }
+      }));
+      setInventory(inventoryData);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to refresh inventory');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8 transition-all duration-300">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 transition-all duration-300">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
+          <p className="font-bold">Error</p>
+          <p>{error}</p>
+          <button 
+            onClick={refreshInventory}
+            className="mt-2 text-indigo-600 hover:text-indigo-800"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 transition-all duration-300">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Inventory Management</h1>
         <div className="flex space-x-2">
-          <button className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+          <button 
+            onClick={refreshInventory}
+            className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
             <FiRefreshCw className="mr-2" />
             Refresh Inventory
           </button>
@@ -184,7 +330,19 @@ function Inventory() {
                   <tr key={item.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md"></div>
+                        <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md overflow-hidden">
+                          {item.image?.url ? (
+                            <img 
+                              src={item.image.url} 
+                              alt={item.product} 
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-gray-400">
+                              <FiPackage />
+                            </div>
+                          )}
+                        </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">{item.product}</div>
                         </div>
@@ -208,9 +366,6 @@ function Inventory() {
                       >
                         Restock
                       </button>
-                      <button className="text-gray-600 hover:text-gray-900">
-                        Adjust
-                      </button>
                     </td>
                   </tr>
                 ))
@@ -232,30 +387,41 @@ function Inventory() {
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Restock {restockItem?.product}</h2>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Quantity to Add</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Quantity to Add
+                <span className="text-gray-500 ml-1">(Current: {restockItem?.currentStock})</span>
+              </label>
               <input
                 type="number"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={restockQuantity}
                 onChange={(e) => setRestockQuantity(e.target.value)}
                 min="1"
+                disabled={isSubmitting}
               />
+              {restockError && (
+                <p className="mt-1 text-sm text-red-600">{restockError}</p>
+              )}
             </div>
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => {
                   setShowRestockModal(false);
-                  setRestockQuantity('');
+                  setRestockError('');
                 }}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                disabled={isSubmitting}
+                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-70"
               >
                 Cancel
               </button>
               <button
                 onClick={submitRestock}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700"
+                disabled={isSubmitting}
+                className={`px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 ${
+                  isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                }`}
               >
-                Confirm Restock
+                {isSubmitting ? 'Updating...' : 'Confirm Restock'}
               </button>
             </div>
           </div>

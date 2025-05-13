@@ -44,6 +44,7 @@ import Users from "./pages/Admin/Users/Users.jsx";
 import AdminSettings from "./pages/Admin/AdminSettings/AdminSettings.jsx";
 import Analytics from "./pages/Admin/Analytics/Analytics.jsx";
 import EditProduct from "./pages/Admin/Products/EditProduct.jsx";
+import AddProduct from "./pages/Admin/Products/AddProduct.jsx"
 
 function HomePage() {
   return (
@@ -97,6 +98,7 @@ function App() {
           <Route path="/admin/settings" element={<AdminLayout><AdminSettings/></AdminLayout>} />
           <Route path="/admin/analytics" element={<AdminLayout><Analytics/></AdminLayout>} />
           <Route path="/admin/products/edit/:id" element={<AdminLayout><EditProduct/></AdminLayout>} />
+          <Route path="/admin/products/add" element={<AdminLayout><AddProduct/></AdminLayout>} />
 
 
           {/* 404 Page */}

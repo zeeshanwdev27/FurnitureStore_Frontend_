@@ -1,50 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 
-function ProductForm() {
-  const { id } = useParams();
+function AddProduct() {
   const navigate = useNavigate();
-  const isEditMode = Boolean(id);
-  
   const [product, setProduct] = useState({
     name: '',
     description: '',
-    price: 0,
+    price: '',
     category: '',
-    stock: 0,
+    stock: '',
     image: { url: '', filename: '' }
   });
-  
-  const [loading, setLoading] = useState(isEditMode);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Fetch product if in edit mode
-  useEffect(() => {
-    if (!isEditMode) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchProduct = async () => {
-      try {
-        const response = await axios.get(`http://localhost:3000/api/product/${id}`);
-        setProduct({
-          ...response.data,
-          price: response.data.price.toString(), // Ensure proper formatting
-          stock: response.data.stock.toString()
-        });
-        setLoading(false);
-      } catch (err) {
-        setError(err.response?.data?.error || 'Failed to fetch product');
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [id, isEditMode]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +37,7 @@ function ProductForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError(null);
     
     try {
       const productData = {
@@ -75,47 +46,14 @@ function ProductForm() {
         stock: parseInt(product.stock) || 0
       };
 
-      if (isEditMode) {
-        await axios.put(`http://localhost:3000/api/products/${id}`, productData);
-      } else {
-        await axios.post('http://localhost:3000/api/products', productData);
-      }
-      
+      await axios.post('http://localhost:3000/api/products', productData);
       navigate('/admin/allproducts');
     } catch (err) {
-      setError(err.response?.data?.error || 
-        (isEditMode ? 'Failed to update product' : 'Failed to create product'));
+      setError(err.response?.data?.error || 'Failed to create product');
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="p-8 transition-all duration-300">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-8 transition-all duration-300">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-          <button 
-            onClick={() => navigate('/admin/allproducts')}
-            className="mt-2 text-indigo-600 hover:text-indigo-800"
-          >
-            Back to Products
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-8 transition-all duration-300">
@@ -126,12 +64,16 @@ function ProductForm() {
         >
           <FiArrowLeft className="mr-1" /> Back
         </button>
-        <h1 className="text-3xl font-bold text-gray-800">
-          {isEditMode ? 'Edit Product' : 'Add New Product'}
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-800">Add New Product</h1>
       </div>
 
       <div className="bg-white rounded-lg shadow p-6 max-w-3xl">
+        {error && (
+          <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+            <p>{error}</p>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -224,7 +166,7 @@ function ProductForm() {
               className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed"
             >
               <FiSave className="mr-2" />
-              {isSubmitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Add Product'}
+              {isSubmitting ? 'Saving...' : 'Add Product'}
             </button>
           </div>
         </form>
@@ -233,4 +175,4 @@ function ProductForm() {
   );
 }
 
-export default ProductForm;
+export default AddProduct;
