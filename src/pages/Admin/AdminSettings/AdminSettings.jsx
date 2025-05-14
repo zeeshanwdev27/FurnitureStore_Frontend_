@@ -1,14 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiMail, FiLock, FiSave, FiEye, FiEyeOff } from 'react-icons/fi';
+import axios from 'axios';
 
 function AdminSettings() {
-  // Demo data - will be replaced with real auth later
-  const demoUser = {
-    email: 'admin@example.com'
-  };
-
   const [formData, setFormData] = useState({
-    email: demoUser.email,
+    email: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -19,6 +15,30 @@ function AdminSettings() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState('');
+
+  // Fetch current admin data
+  useEffect(() => {
+    const fetchAdminData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:3000/api/admin/me', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        setFormData(prev => ({
+          ...prev,
+          email: response.data.user.email
+        }));
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to fetch admin data');
+      }
+    };
+
+    fetchAdminData();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,21 +48,52 @@ function AdminSettings() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    
+    // Validate passwords match
+    if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
+      return setError('New passwords do not match');
+    }
+
     setIsLoading(true);
     
-    // Demo UI response - no actual functionality
-    setTimeout(() => {
-      setSuccessMessage('Profile updated successfully! (DEMO)');
+    try {
+      const token = localStorage.getItem('token');
+      const updateData = {
+        email: formData.email
+      };
+
+      // Only include password fields if they're being changed
+      if (formData.currentPassword && formData.newPassword) {
+        updateData.currentPassword = formData.currentPassword;
+        updateData.newPassword = formData.newPassword;
+      }
+
+      await axios.put(
+        'http://localhost:3000/api/admin/update-profile',
+        updateData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      setSuccessMessage('Profile updated successfully!');
       setFormData(prev => ({
         ...prev,
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       }));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to update profile');
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -52,6 +103,12 @@ function AdminSettings() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+            {error}
+          </div>
+        )}
+
         {successMessage && (
           <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
             {successMessage}
@@ -70,6 +127,7 @@ function AdminSettings() {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               value={formData.email}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -115,6 +173,7 @@ function AdminSettings() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     value={formData.newPassword}
                     onChange={handleChange}
+                    minLength="6"
                   />
                   <button
                     type="button"
@@ -138,6 +197,7 @@ function AdminSettings() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     value={formData.confirmPassword}
                     onChange={handleChange}
+                    minLength="6"
                   />
                   <button
                     type="button"
@@ -162,21 +222,6 @@ function AdminSettings() {
             </button>
           </div>
         </form>
-
-        <div className="mt-8 p-4 bg-yellow-50 border-l-4 border-yellow-400">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                This is a <strong>demo UI only</strong>. No actual changes will be saved to your account.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
