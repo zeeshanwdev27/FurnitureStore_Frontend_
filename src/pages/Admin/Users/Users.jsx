@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FiSearch, 
   FiUserPlus, 
@@ -7,81 +7,48 @@ import {
   FiFilter,
   FiUser,
   FiMail,
-  FiPhone,
   FiLock,
   FiCalendar
 } from 'react-icons/fi';
 import { BsShieldLock, BsPersonCheck, BsPersonX } from 'react-icons/bs';
+import axios from 'axios';
 
 function Users() {
-  // Sample user data - replace with real data from your backend
-  const [users, setUsers] = useState([
-    { 
-      id: 1, 
-      name: 'John Doe', 
-      email: 'john@example.com', 
-      phone: '+1 (555) 123-4567', 
-      role: 'Admin', 
-      status: 'Active', 
-      joined: '2023-01-15',
-      lastLogin: '2023-06-20 14:30'
-    },
-    { 
-      id: 2, 
-      name: 'Jane Smith', 
-      email: 'jane@example.com', 
-      phone: '+1 (555) 987-6543', 
-      role: 'Customer', 
-      status: 'Active', 
-      joined: '2023-02-10',
-      lastLogin: '2023-06-18 09:15'
-    },
-    { 
-      id: 3, 
-      name: 'Robert Johnson', 
-      email: 'robert@example.com', 
-      phone: '+1 (555) 456-7890', 
-      role: 'Editor', 
-      status: 'Inactive', 
-      joined: '2023-03-05',
-      lastLogin: '2023-05-28 16:45'
-    },
-    { 
-      id: 4, 
-      name: 'Emily Davis', 
-      email: 'emily@example.com', 
-      phone: '+1 (555) 789-0123', 
-      role: 'Customer', 
-      status: 'Suspended', 
-      joined: '2023-04-20',
-      lastLogin: '2023-06-10 11:20'
-    },
-    { 
-      id: 5, 
-      name: 'Michael Wilson', 
-      email: 'michael@example.com', 
-      phone: '+1 (555) 234-5678', 
-      role: 'Customer', 
-      status: 'Active', 
-      joined: '2023-05-15',
-      lastLogin: '2023-06-19 18:30'
-    },
-  ]);
-
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [showUserModal, setShowUserModal] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [password, setPassword] = useState('');
 
   // Filter options
   const roles = ['All', 'Admin', 'Editor', 'Customer'];
   const statuses = ['All', 'Active', 'Inactive', 'Suspended'];
 
+  // Fetch users from backend
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/admin/users');
+        setUsers(response.data.users);
+        setLoading(false);
+      } catch (err) {
+        setError(err.response?.data?.error || 'Failed to fetch users');
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
   // Filter users based on search and filters
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = user.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          user.email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = selectedRole === 'All' || user.role === selectedRole;
     const matchesStatus = selectedStatus === 'All' || user.status === selectedStatus;
@@ -96,38 +63,67 @@ function Users() {
 
   const handleAddUser = () => {
     setCurrentUser({
-      id: null,
-      name: '',
+      username: '',
       email: '',
-      phone: '',
       role: 'Customer',
       status: 'Active'
     });
+    setPassword('');
     setIsEditMode(false);
     setShowUserModal(true);
   };
 
-  const handleSaveUser = () => {
-    if (isEditMode) {
-      // Update existing user
-      setUsers(users.map(user => 
-        user.id === currentUser.id ? currentUser : user
-      ));
-    } else {
-      // Add new user
-      const newUser = {
-        ...currentUser,
-        id: Math.max(...users.map(u => u.id)) + 1,
-        joined: new Date().toISOString().split('T')[0],
-        lastLogin: 'Never'
-      };
-      setUsers([...users, newUser]);
+  const handleSaveUser = async () => {
+    try {
+      let response;
+
+      if (isEditMode) {
+        // Update existing user
+        response = await axios.put(
+          `http://localhost:3000/api/admin/users/${currentUser._id}`,
+          currentUser,
+        );
+
+        // If user is being suspended, show confirmation
+        if (currentUser.status === 'Suspended') {
+          alert(`${currentUser.username} has been suspended and can no longer log in.`);
+        }
+        
+        // Update local state
+        setUsers(users.map(user => 
+          user._id === currentUser._id ? response.data.user : user
+        ));
+      } else {
+        // Add new user
+        const userData = {
+          ...currentUser,
+          password
+        };
+        
+        response = await axios.post(
+          'http://localhost:3000/api/admin/users',
+          userData,
+        );
+        
+        // Add to local state
+        setUsers([...users, response.data.user]);
+      }
+      
+      setShowUserModal(false);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save user');
     }
-    setShowUserModal(false);
   };
 
-  const handleDeleteUser = (id) => {
-    setUsers(users.filter(user => user.id !== id));
+  const handleDeleteUser = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3000/api/admin/users/${id}`);
+      
+      // Update local state
+      setUsers(users.filter(user => user._id !== id));
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to delete user');
+    }
   };
 
   const getStatusIcon = (status) => {
@@ -138,6 +134,25 @@ function Users() {
       default: return <BsPersonX className="text-gray-500" />;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-8 flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 transition-all duration-300">
@@ -256,7 +271,6 @@ function Users() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined</th>
@@ -267,28 +281,36 @@ function Users() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUsers.length > 0 ? (
                 filteredUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
                           <FiUser className="text-gray-500" />
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                          <div className="text-sm font-medium text-gray-900">{user.username}</div>
                           <div className="text-sm text-gray-500">{user.email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.phone}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.role || 'Customer'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {getStatusIcon(user.status)}
-                        <span className="ml-2">{user.status}</span>
+                        <span className={`ml-2 ${user.status === 'Suspended' ? 'text-red-600 font-semibold' : ''}`}>
+                          {user.status || 'Active'}
+                        </span>
+                        {user.status === 'Suspended' && (
+                          <span className="ml-2 text-xs text-red-500">(Cannot login)</span>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.joined}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.lastLogin}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button 
@@ -298,7 +320,7 @@ function Users() {
                           <FiEdit2 />
                         </button>
                         <button 
-                          onClick={() => handleDeleteUser(user.id)}
+                          onClick={() => handleDeleteUser(user._id)}
                           className="text-red-600 hover:text-red-900"
                         >
                           <FiTrash2 />
@@ -309,7 +331,7 @@ function Users() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
                     No users found matching your criteria
                   </td>
                 </tr>
@@ -337,12 +359,12 @@ function Users() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
                 <input
                   type="text"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={currentUser?.name || ''}
-                  onChange={(e) => setCurrentUser({...currentUser, name: e.target.value})}
+                  value={currentUser?.username || ''}
+                  onChange={(e) => setCurrentUser({...currentUser, username: e.target.value})}
                 />
               </div>
 
@@ -353,16 +375,6 @@ function Users() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   value={currentUser?.email || ''}
                   onChange={(e) => setCurrentUser({...currentUser, email: e.target.value})}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                <input
-                  type="tel"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  value={currentUser?.phone || ''}
-                  onChange={(e) => setCurrentUser({...currentUser, phone: e.target.value})}
                 />
               </div>
 
@@ -400,7 +412,9 @@ function Users() {
                   <input
                     type="password"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="Set temporary password"
+                    placeholder="Set password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
               )}
