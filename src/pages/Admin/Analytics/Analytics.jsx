@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FiTrendingUp, 
   FiUsers, 
@@ -21,40 +21,112 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
+import axios from 'axios';
 
 const Analytics = () => {
-  // Demo data - replace with real API data later
-  const salesData = [
-    { name: 'Jan', revenue: 4000, orders: 240 },
-    { name: 'Feb', revenue: 3000, orders: 139 },
-    { name: 'Mar', revenue: 5000, orders: 480 },
-    { name: 'Apr', revenue: 2780, orders: 390 },
-    { name: 'May', revenue: 6890, orders: 430 },
-    { name: 'Jun', revenue: 8000, orders: 520 },
-    { name: 'Jul', revenue: 8500, orders: 610 },
-  ];
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [timeRange, setTimeRange] = useState('Last 7 Days');
+  const [chartGrouping, setChartGrouping] = useState('By Month');
+  
+  // State for all data
+  const [stats, setStats] = useState([]);
+  const [salesData, setSalesData] = useState([]);
+  const [trafficData, setTrafficData] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
 
-  const trafficData = [
-    { name: 'Direct', value: 400 },
-    { name: 'Social', value: 300 },
-    { name: 'Referral', value: 200 },
-    { name: 'Organic', value: 100 },
-  ];
+  // Fetch analytics data from backend
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all data in parallel without authentication headers
+        const [statsRes, salesRes, trafficRes, productsRes, activityRes] = await Promise.all([
+          axios.get('http://localhost:3000/api/analytics/stats', {
+            params: { range: timeRange }
+          }),
+          axios.get('http://localhost:3000/api/analytics/sales', {
+            params: { range: timeRange, groupBy: chartGrouping }
+          }),
+          axios.get('http://localhost:3000/api/analytics/traffic', {
+            params: { range: timeRange }
+          }),
+          axios.get('http://localhost:3000/api/analytics/top-products', {
+            params: { range: timeRange, limit: 5 }
+          }),
+          axios.get('http://localhost:3000/api/analytics/recent-activity', {
+            params: { limit: 5 }
+          })
+        ]);
 
-  const topProducts = [
-    { name: 'Wireless Headphones', sales: 240 },
-    { name: 'Smart Watch', sales: 189 },
-    { name: 'Leather Wallet', sales: 152 },
-    { name: 'Cotton T-Shirt', sales: 110 },
-    { name: 'Running Shoes', sales: 95 },
-  ];
+        // Transform stats data to match your UI format
+        const transformedStats = [
+          { 
+            title: 'Total Revenue', 
+            value: `$${statsRes.data.totalRevenue.toLocaleString()}`, 
+            change: `${statsRes.data.revenueChange >= 0 ? '+' : ''}${statsRes.data.revenueChange.toFixed(1)}%`, 
+            icon: <FiDollarSign className="text-2xl" />, 
+            color: 'bg-blue-100 text-blue-600' 
+          },
+          { 
+            title: 'Total Orders', 
+            value: statsRes.data.totalOrders.toLocaleString(), 
+            change: `${statsRes.data.ordersChange >= 0 ? '+' : ''}${statsRes.data.ordersChange.toFixed(1)}%`, 
+            icon: <FiShoppingCart className="text-2xl" />, 
+            color: 'bg-green-100 text-green-600' 
+          },
+          { 
+            title: 'New Customers', 
+            value: statsRes.data.newCustomers.toLocaleString(), 
+            change: `${statsRes.data.customersChange >= 0 ? '+' : ''}${statsRes.data.customersChange.toFixed(1)}%`, 
+            icon: <FiUsers className="text-2xl" />, 
+            color: 'bg-purple-100 text-purple-600' 
+          },
+          { 
+            title: 'Conversion Rate', 
+            value: `${statsRes.data.conversionRate.toFixed(1)}%`, 
+            change: `${statsRes.data.conversionChange >= 0 ? '+' : ''}${statsRes.data.conversionChange.toFixed(1)}%`, 
+            icon: <FiTrendingUp className="text-2xl" />, 
+            color: 'bg-orange-100 text-orange-600' 
+          }
+        ];
 
-  const stats = [
-    { title: 'Total Revenue', value: '$32,450', change: '+12.5%', icon: <FiDollarSign className="text-2xl" />, color: 'bg-blue-100 text-blue-600' },
-    { title: 'Total Orders', value: '2,850', change: '+8.3%', icon: <FiShoppingCart className="text-2xl" />, color: 'bg-green-100 text-green-600' },
-    { title: 'New Customers', value: '456', change: '+5.2%', icon: <FiUsers className="text-2xl" />, color: 'bg-purple-100 text-purple-600' },
-    { title: 'Conversion Rate', value: '3.8%', change: '+1.2%', icon: <FiTrendingUp className="text-2xl" />, color: 'bg-orange-100 text-orange-600' },
-  ];
+        setStats(transformedStats);
+        setSalesData(salesRes.data);
+        setTrafficData(trafficRes.data);
+        setTopProducts(productsRes.data);
+        setRecentActivity(activityRes.data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch analytics data:', err);
+        setError('Failed to load analytics data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalyticsData();
+  }, [timeRange, chartGrouping]);
+
+  if (loading) {
+    return (
+      <div className="p-8 flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 transition-all duration-300">
@@ -62,11 +134,16 @@ const Analytics = () => {
         <h1 className="text-3xl font-bold text-gray-800">Analytics Dashboard</h1>
         <div className="flex items-center space-x-2">
           <FiCalendar className="text-gray-500" />
-          <select className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select 
+            className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+          >
             <option>Last 7 Days</option>
             <option>Last 30 Days</option>
             <option>This Month</option>
             <option>Last Month</option>
+            <option>This Year</option>
           </select>
         </div>
       </div>
@@ -82,7 +159,7 @@ const Analytics = () => {
               <p className="text-gray-500 text-sm">{stat.title}</p>
               <p className="text-2xl font-bold my-1">{stat.value}</p>
               <p className="text-sm flex items-center">
-                <span className="text-green-500 flex items-center">
+                <span className={`${stat.change.startsWith('+') ? 'text-green-500' : 'text-red-500'} flex items-center`}>
                   <FiTrendingUp className="mr-1" /> {stat.change}
                 </span>
                 <span className="text-gray-400 ml-2">vs last period</span>
@@ -98,7 +175,11 @@ const Analytics = () => {
           <h2 className="text-xl font-semibold text-gray-800">Revenue & Orders</h2>
           <div className="flex items-center space-x-2">
             <FiFilter className="text-gray-500" />
-            <select className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <select 
+              className="border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              value={chartGrouping}
+              onChange={(e) => setChartGrouping(e.target.value)}
+            >
               <option>By Month</option>
               <option>By Week</option>
               <option>By Day</option>
@@ -206,13 +287,7 @@ const Analytics = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {[
-                { event: 'New Order #10025', user: 'John Doe', time: '10 min ago', status: 'Completed' },
-                { event: 'Payment Received', user: 'Jane Smith', time: '25 min ago', status: 'Processed' },
-                { event: 'New User Registered', user: 'Robert Johnson', time: '1 hour ago', status: 'Active' },
-                { event: 'Order #10024 Shipped', user: 'Emily Davis', time: '2 hours ago', status: 'Shipped' },
-                { event: 'Refund Processed', user: 'Michael Wilson', time: '3 hours ago', status: 'Completed' },
-              ].map((item, index) => (
+              {recentActivity.map((item, index) => (
                 <tr key={index} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.event}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.user}</td>
