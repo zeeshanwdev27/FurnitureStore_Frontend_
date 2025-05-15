@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiFilter } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiFilter, FiShoppingCart, FiLayers } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
@@ -10,37 +10,46 @@ function AllProducts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
+  const [categories, setCategories] = useState([{ _id: 'All', name: 'All' }]);
 
-  // Fetch products from backend
+  // Fetch products and categories from backend
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/all-products');
-        setProducts(response.data);
+        const [productsRes, categoriesRes] = await Promise.all([
+          axios.get('http://localhost:3000/api/all-products'),
+          axios.get('http://localhost:3000/api/categories')
+        ]);
+        
+        // Ensure products have populated categories
+        const productsWithCategories = productsRes.data.map(product => ({
+          ...product,
+          category: product.category || { _id: 'uncategorized', name: 'Uncategorized' }
+        }));
+        
+        setProducts(productsWithCategories);
+        setCategories([{ _id: 'All', name: 'All' }, ...categoriesRes.data]);
         setLoading(false);
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to fetch products');
+        setError(err.response?.data?.error || 'Failed to fetch data');
         setLoading(false);
       }
     };
-
-    fetchProducts();
+    fetchData();
   }, []);
 
-  // Get unique categories for filter dropdown
-  const categories = ['All', ...new Set(products.map(product => product.category))];
   const statuses = ['All', 'In Stock', 'Out of Stock', 'Low Stock'];
 
   // Filter products based on search and filters
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'All' || product.category._id === selectedCategory;
     
     // Determine stock status
     let productStatus = 'In Stock';
     if (product.stock <= 0) {
       productStatus = 'Out of Stock';
-    } else if (product.stock < 10) { // Assuming low stock threshold is 10
+    } else if (product.stock < 10) {
       productStatus = 'Low Stock';
     }
     
@@ -49,6 +58,8 @@ function AllProducts() {
   });
 
   const deleteProduct = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) return;
+    
     try {
       await axios.delete(`http://localhost:3000/api/products/${id}`);
       setProducts(products.filter(product => product._id !== id));
@@ -82,13 +93,22 @@ function AllProducts() {
     <div className="p-8 transition-all duration-300">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Product Management</h1>
-        <Link 
-          to="/admin/products/add" 
-          className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <FiPlus className="mr-2" />
-          Add Product
-        </Link>
+        <div className="flex space-x-4">
+          <Link 
+            to="/admin/categories/add" 
+            className="flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <FiLayers className="mr-2" />
+            Category Manage
+          </Link>
+          <Link 
+            to="/admin/products/add" 
+            className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          >
+            <FiPlus className="mr-2" />
+            Add Product
+          </Link>
+        </div>
       </div>
 
       {/* Search and Filter Bar */}
@@ -119,7 +139,7 @@ function AllProducts() {
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
               {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
+                <option key={category._id} value={category._id}>{category.name}</option>
               ))}
             </select>
           </div>
@@ -159,13 +179,8 @@ function AllProducts() {
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredProducts.length > 0 ? (
                 filteredProducts.map(product => {
-                  // Determine stock status
-                  let status = 'In Stock';
-                  if (product.stock <= 0) {
-                    status = 'Out of Stock';
-                  } else if (product.stock < 10) {
-                    status = 'Low Stock';
-                  }
+                  const status = product.stock <= 0 ? 'Out of Stock' : 
+                                product.stock < 10 ? 'Low Stock' : 'In Stock';
 
                   return (
                     <tr key={product._id} className="hover:bg-gray-50">
@@ -173,7 +188,19 @@ function AllProducts() {
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-md overflow-hidden">
                             {product.image?.url ? (
-                              <img src={product.image.url} alt={product.name} className="h-full w-full object-cover" />
+                              <img 
+                                src={product.image.url} 
+                                alt={product.name} 
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.parentElement.innerHTML = (
+                                    <div className="h-full w-full flex items-center justify-center text-gray-400">
+                                      <FiShoppingCart />
+                                    </div>
+                                  );
+                                }}
+                              />
                             ) : (
                               <div className="h-full w-full flex items-center justify-center text-gray-400">
                                 <FiShoppingCart />
@@ -181,14 +208,24 @@ function AllProducts() {
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                            <div className="text-sm text-gray-500">{product.description?.substring(0, 30)}...</div>
+                            <div className="text-sm font-medium text-gray-900">{product.name.length >= 25
+    ? product.name.slice(0, 25) 
+    : product.name.padEnd(25, ' ')}</div>
+                            <div className="text-sm text-gray-500">
+                              {product.description?.substring(0, 30) || 'No description'}...
+                            </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${product.price?.toFixed(2)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.stock}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {product.category?.name || 'Uncategorized'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${product.price?.toFixed(2) || '0.00'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {product.stock || 0}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                           ${status === 'In Stock' ? 'bg-green-100 text-green-800' : 

@@ -33,7 +33,7 @@ function PopularProducts() {
                 alt={product.name}
                 className="w-full h-48 sm:h-40 md:h-48 object-cover mb-2"
               />
-              <p className="text-sm text-gray-500">{product.category}</p>
+              <p className="text-sm text-gray-500">{product.category?.name || 'Uncategorized'}</p>
               <p className="font-bold text-sm md:text-base lg:text-lg">{product.name}</p>
               <div className="text-[#885B3A]">★ ★ ★ ★ ☆</div>
               <p className="text-black font-semibold">${product.price}</p>

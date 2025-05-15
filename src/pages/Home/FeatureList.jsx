@@ -38,7 +38,7 @@ function FeatureList() {
               alt={product.name}
               className="w-full h-48 object-cover mb-2 sm:h-36 md:h-48 lg:h-48"
             />
-            <p className="text-sm text-gray-500">{product.category}</p>
+            <p className="text-sm text-gray-500">{product.category?.name || 'Uncategorized'}</p>
             <p className="font-bold lg:text-lg sm:text-sm md:text-sm">{product.name}</p>
             <div className="text-[#885B3A]">★ ★ ★ ★ ☆</div>
             <p className="text-black font-semibold">${product.price}</p>

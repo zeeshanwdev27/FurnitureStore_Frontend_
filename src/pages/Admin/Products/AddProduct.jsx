@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
 
 function AddProduct() {
+  const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
+
+  // Add this useEffect to fetch categories
+useEffect(() => {
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get('http://localhost:3000/api/categories');
+      setCategories(response.data);
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  };
+  fetchCategories();
+}, []);
+
+
   const [product, setProduct] = useState({
     name: '',
     description: '',
@@ -60,7 +76,7 @@ function AddProduct() {
       <div className="flex items-center mb-6">
         <button 
           onClick={() => navigate('/admin/allproducts')}
-          className="flex items-center text-indigo-600 hover:text-indigo-800 mr-4"
+          className="cursor-pointer flex items-center text-indigo-600 hover:text-indigo-800 mr-4"
         >
           <FiArrowLeft className="mr-1" /> Back
         </button>
@@ -88,7 +104,7 @@ function AddProduct() {
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
               <input
                 type="text"
@@ -98,7 +114,22 @@ function AddProduct() {
                 onChange={handleChange}
                 required
               />
-            </div>
+            </div> */}
+            <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
+<select
+  name="category"
+  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+  value={product.category}
+  onChange={handleChange}
+  required
+>
+  <option value="">Select a category</option>
+  {categories.map(cat => (
+    <option key={cat._id} value={cat._id}>{cat.name}</option>
+  ))}
+</select>
+</div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Price*</label>

@@ -33,9 +33,9 @@ function Inventory() {
         const response = await axios.get('http://localhost:3000/api/all-products');
         const inventoryData = response.data.map(product => ({
           id: product._id,
-          product: product.name,
+          product: product.name.length > 25 ? `${product.name.slice(0, 25)}...` : product.name,
           sku: product._id.slice(-6).toUpperCase(),
-          category: product.category,
+          category: product.category?.name,
           currentStock: product.stock || 0,
           lowStockThreshold: 10,
           status: getStockStatus(product.stock || 0, 10),
@@ -362,7 +362,7 @@ function Inventory() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button 
                         onClick={() => handleRestock(item)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                        className="text-indigo-600 hover:text-indigo-900 mr-3 cursor-pointer"
                       >
                         Restock
                       </button>
@@ -410,14 +410,14 @@ function Inventory() {
                   setRestockError('');
                 }}
                 disabled={isSubmitting}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-70"
+                className="cursor-pointer px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-70"
               >
                 Cancel
               </button>
               <button
                 onClick={submitRestock}
                 disabled={isSubmitting}
-                className={`px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 ${
+                className={`cursor-pointer px-4 py-2 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 ${
                   isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
                 }`}
               >

@@ -117,7 +117,7 @@ function AdminSettings() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+            <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-1 flex items-center">
               <FiMail className="mr-2" /> Email Address
             </label>
             <input

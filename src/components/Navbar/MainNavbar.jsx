@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import roiserLogo from "../../assets/ROISER.png";
 import sort from "../../assets/sort.svg";
 import profile from "../../assets/profile.svg";
@@ -13,16 +13,33 @@ import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext.jsx";
 import { ToastContainer, toast } from "react-toastify";
+import axios from "axios";
 import "react-toastify/dist/ReactToastify.css";
 
 function MainNavbar() {
-  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const { toggleCart, itemCount } = useCart();
   const [searchTerm, setSearchTerm] = useState("");
   const [profileAnchorEl, setProfileAnchorEl] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const navigate = useNavigate();
+
+  // Fetch categories from API
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/api/categories');
+        setCategories(response.data);
+        setLoadingCategories(false);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Enhanced authentication check
   const isAuthenticated = () => {
@@ -39,8 +56,8 @@ function MainNavbar() {
     navigate("/");
   };
 
-  const handleCategoryClick = (category) => {
-    navigate(`/category/${category}`);
+  const handleCategoryClick = (categoryId) => {
+    navigate(`/category/${categoryId}`);
     setIsMobileMenuOpen(false);
   };
 
@@ -103,17 +120,17 @@ function MainNavbar() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-4">
-            <button 
-              onClick={toggleCart}
-              className="relative p-1 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <img src={cart} alt="cart" className="w-5 h-5" />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {itemCount}
-                </span>
-              )}
-            </button>
+              <button 
+                onClick={toggleCart}
+                className="relative p-1 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <img src={cart} alt="cart" className="w-5 h-5" />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {itemCount}
+                  </span>
+                )}
+              </button>
               <img
                 src={heart}
                 alt="heart"
@@ -181,15 +198,21 @@ function MainNavbar() {
         {isMobileMenuOpen && (
           <div className="mt-4 lg:hidden bg-gray-50 rounded-lg p-4">
             <div className="flex flex-col gap-2">
-              {["Tables", "Sofas", "Chairs"].map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryClick(category)}
-                  className="text-left font-bold text-gray-700 py-2 px-3 hover:bg-gray-200 rounded-md transition-colors"
-                >
-                  {category}
-                </button>
-              ))}
+              {loadingCategories ? (
+                <div className="flex justify-center py-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-500"></div>
+                </div>
+              ) : (
+                categories.map((category) => (
+                  <button
+                    key={category._id}
+                    onClick={() => handleCategoryClick(category._id)}
+                    className="text-left font-bold text-gray-700 py-2 px-3 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    {category.name}
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -212,51 +235,59 @@ function MainNavbar() {
               </p>
             </div>
 
-          {/* Categories */}
-          <PopupState variant="popover" popupId="categories-menu-lg">
-            {(popupState) => (
-              <div className="relative">
-                <button
-                  {...bindTrigger(popupState)}
-                  className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                  <img src={sort} alt="sort" className="w-5 h-5" />
-                  <span>Categories</span>
-                </button>
-                <Menu
-                  {...bindMenu(popupState)}
-                  anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                  transformOrigin={{ vertical: "top", horizontal: "left" }}
-                  sx={{
-                    "& .MuiPaper-root": {
-                      minWidth: "200px",
-                      borderRadius: "0.5rem",
-                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-                      marginTop: "0.5rem",
-                    },
-                    "& .MuiMenuItem-root": {
-                      padding: "0.75rem 1rem",
-                      "&:hover": {
-                        backgroundColor: "#f3f4f6",
+            {/* Categories */}
+            <PopupState variant="popover" popupId="categories-menu-lg">
+              {(popupState) => (
+                <div className="relative">
+                  <button
+                    {...bindTrigger(popupState)}
+                    className="cursor-pointer flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    <img src={sort} alt="sort" className="w-5 h-5" />
+                    <span>Categories</span>
+                  </button>
+                  <Menu
+                    {...bindMenu(popupState)}
+                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                    transformOrigin={{ vertical: "top", horizontal: "left" }}
+                    sx={{
+                      "& .MuiPaper-root": {
+                        minWidth: "200px",
+                        borderRadius: "0.5rem",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+                        marginTop: "0.5rem",
                       },
-                    },
-                  }}
-                >
-                  {["Tables", "Sofas", "Chairs"].map((category) => (
-                    <MenuItem
-                      key={category}
-                      onClick={() => {
-                        popupState.close();
-                        navigate(`/category/${category}`);
-                      }}
-                    >
-                      {category}
-                    </MenuItem>
-                  ))}
-                </Menu>
-              </div>
-            )}
-          </PopupState>
+                      "& .MuiMenuItem-root": {
+                        padding: "0.75rem 1rem",
+                        "&:hover": {
+                          backgroundColor: "#f3f4f6",
+                        },
+                      },
+                    }}
+                  >
+                    {loadingCategories ? (
+                      <MenuItem disabled>
+                        <div className="flex justify-center w-full">
+                          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-indigo-500"></div>
+                        </div>
+                      </MenuItem>
+                    ) : (
+                      categories.map((category) => (
+                        <MenuItem
+                          key={category._id}
+                          onClick={() => {
+                            popupState.close();
+                            navigate(`/category/${category._id}`);
+                          }}
+                        >
+                          {category.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Menu>
+                </div>
+              )}
+            </PopupState>
           </div>
 
           <div className="flex-1 max-w-2xl relative flex items-center mx-8">
@@ -277,7 +308,7 @@ function MainNavbar() {
               className="absolute right-3 flex items-center pt-1 hover:cursor-pointer"
               onClick={() => {
                 if (searchTerm.trim()) {
-                  navigate(`/api/search?q=${searchTerm}`);
+                  navigate(`/search?q=${searchTerm}`);
                   setSearchTerm("");
                 }
               }}
@@ -349,10 +380,6 @@ function MainNavbar() {
               </Menu>
             </div>
           </div>
-
-
-
-          
         </div>
       </nav>
 
