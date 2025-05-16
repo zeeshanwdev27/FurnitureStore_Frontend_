@@ -133,6 +133,10 @@ function AdminDashboard() {
     navigate("/admin/analytics")
   }
 
+  const handleCreateDiscount =()=>{
+    navigate("/admin/create-discount")
+  }
+
   return (
     <div className="p-8 transition-all duration-300">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">Dashboard Overview</h1>
@@ -220,7 +224,7 @@ function AdminDashboard() {
             </div>
             <span className="text-sm font-medium">Add Customer</span>
           </button>
-          <button className="cursor-pointer p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center">
+          <button onClick={handleCreateDiscount} className="cursor-pointer p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex flex-col items-center">
             <div className="bg-purple-100 text-purple-600 p-3 rounded-full mb-2">
               <FiDollarSign className="text-xl" />
             </div>

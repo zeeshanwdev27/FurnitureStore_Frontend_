@@ -13,7 +13,7 @@ function Checkouts() {
     clearCart
   } = useCart();
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -29,6 +29,8 @@ function Checkouts() {
   const [promoCode, setPromoCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [isPromoApplied, setIsPromoApplied] = useState(false);
+  const [appliedPromoCode, setAppliedPromoCode] = useState("");
+  const [promoDetails, setPromoDetails] = useState(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -41,14 +43,37 @@ function Checkouts() {
     }));
   };
 
-  const applyPromoCode = () => {
-    if (promoCode.toLowerCase() === "summer10" && !isPromoApplied) {
-      setDiscount(10);
-      setIsPromoApplied(true);
-    } else if (isPromoApplied) {
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      alert("Please enter a promo code");
+      return;
+    }
+
+    if (isPromoApplied) {
       alert("Promo code already applied");
-    } else {
-      alert("Invalid promo code");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/promo-codes/validate?code=${promoCode}&subtotal=${contextSubtotal}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to validate promo code");
+      }
+
+      setDiscount(data.discountAmount);
+      setIsPromoApplied(true);
+      setAppliedPromoCode(promoCode);
+      setPromoDetails({
+        code: data.promoCode,
+        discountType: data.discountType,
+        discountValue: data.discountValue,
+        promoCodeId: data.promoCodeId
+      });
+    } catch (err) {
+      alert(err.message || "Invalid promo code");
+      console.error("Promo code error:", err);
     }
   };
 
@@ -56,6 +81,8 @@ function Checkouts() {
     setDiscount(0);
     setIsPromoApplied(false);
     setPromoCode("");
+    setAppliedPromoCode("");
+    setPromoDetails(null);
   };
 
   // Calculate totals with discount
@@ -64,27 +91,19 @@ function Checkouts() {
   const tax = 5; 
   const total = subtotal + shipping + tax - discount;
 
-  // Conver Image Into String
   const getImageUrl = (item) => {
-    // If image is a string URL, use it directly
     if (typeof item.image === "string") {
       return item.image;
     }
-    // If image is an object (like from MongoDB), construct the URL
     if (item.image && item.image.url) {
       return item.image.url;
     }
-    // Fallback to a placeholder if no image is available
-    // return "https://via.placeholder.com/60";
+    return "https://via.placeholder.com/60";
   };
 
-  const handleContinueShopping =()=>{
-    navigate('/products')
-  }
-  
-  // const handlePurchase = ()=>{
-  //   alert("Order Confirm")
-  // }
+  const handleContinueShopping = () => {
+    navigate('/products');
+  };
 
   const handlePurchase = async () => {
     setIsSubmitting(true);
@@ -107,18 +126,17 @@ function Checkouts() {
     }
   
     try {
-      // Validate and transform cart items
       const transformedItems = cartItems.map(item => {
         if (!item._id || typeof item.price !== 'number' || !item.quantity) {
           throw new Error(`Invalid product: ${item.name || 'Unknown'}`);
         }
       
         return {
-          product: item._id,  // Keep this as product
-          name: item.name,    // Add name for order history
+          product: item._id,
+          name: item.name,
           price: item.price,
           quantity: item.quantity || 1,
-          image: item.image   // Add image for order confirmation
+          image: item.image
         };
       });
   
@@ -130,12 +148,15 @@ function Checkouts() {
           shipping,
           tax,
           total,
-          promoCode: isPromoApplied ? promoCode : ""
+          promoCode: isPromoApplied ? {
+            code: appliedPromoCode,
+            discountType: promoDetails.discountType,
+            discountValue: promoDetails.discountValue,
+            promoCodeId: promoDetails.promoCodeId
+          } : null
         },
         items: transformedItems
       };
-  
-      console.log('Order payload:', JSON.stringify(orderData, null, 2));
   
       const token = localStorage.getItem('token');
       if (!token || token === 'undefined') {
@@ -153,13 +174,10 @@ function Checkouts() {
   
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Backend error:', errorData);
         throw new Error(errorData.error || "Failed to place order");
       }
   
       const data = await response.json();
-      console.log('Order created:', data);
-      
       clearCart();
       navigate(`/order-confirmation/${data.orderId}`);
       
@@ -167,12 +185,12 @@ function Checkouts() {
       console.error("Order submission failed:", err);
       let errorMessage = err.message || "Failed to place order. Please try again.";
       
-      // If it's a backend validation error
       if (err.message.includes("Invalid items in cart")) {
         errorMessage = "There was a problem with your cart items. Please refresh and try again.";
       }
       
       setError(errorMessage);
+      setIsSubmitting(false);
     }
   };
 
@@ -339,7 +357,11 @@ function Checkouts() {
                 </div>
                 {isPromoApplied && (
                   <p className="text-green-600 text-sm mt-2">
-                    Promo code applied! $10 discount added.
+                    Promo code {appliedPromoCode} applied! 
+                    {discount > 0 && ` Discount: $${discount.toFixed(2)}`}
+                    {promoDetails?.discountType === 'percentage' && (
+                      <span className="block">({promoDetails.discountValue}% off)</span>
+                    )}
                   </p>
                 )}
               </div>
@@ -456,7 +478,5 @@ function Checkouts() {
     </div>
   );
 }
-
-
 
 export default Checkouts;

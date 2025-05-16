@@ -46,6 +46,7 @@ import Analytics from "./pages/Admin/Analytics/Analytics.jsx";
 import EditProduct from "./pages/Admin/Products/EditProduct.jsx";
 import AddProduct from "./pages/Admin/Products/AddProduct.jsx"
 import AddCategory from "./pages/Admin/Products/AddCategory.jsx"
+import PromoCode from "./pages/Admin/Dashboard/PromoCode.jsx"
 
 function HomePage() {
   return (
@@ -101,6 +102,7 @@ function App() {
           <Route path="/admin/products/edit/:id" element={<AdminLayout><EditProduct/></AdminLayout>} />
           <Route path="/admin/products/add" element={<AdminLayout><AddProduct/></AdminLayout>} />
           <Route path="/admin/categories/add" element={<AdminLayout><AddCategory/></AdminLayout>} />
+          <Route path="/admin/create-discount" element={<AdminLayout><PromoCode/></AdminLayout>} />
 
 
           {/* 404 Page */}
