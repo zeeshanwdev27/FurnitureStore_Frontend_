@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { FiSearch, FiPlus, FiEdit2, FiTrash2, FiFilter, FiShoppingCart, FiLayers } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+} from '@mui/material';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function AllProducts() {
   const [products, setProducts] = useState([]);
@@ -11,6 +21,8 @@ function AllProducts() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [categories, setCategories] = useState([{ _id: 'All', name: 'All' }]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
   // Fetch products and categories from backend
   useEffect(() => {
@@ -57,15 +69,30 @@ function AllProducts() {
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const deleteProduct = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-    
+  const handleDeleteClick = (productId) => {
+    setProductToDelete(productId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+
     try {
-      await axios.delete(`http://localhost:3000/api/products/${id}`);
-      setProducts(products.filter(product => product._id !== id));
+      await axios.delete(`http://localhost:3000/api/products/${productToDelete}`);
+      setProducts(products.filter(product => product._id !== productToDelete));
+      toast.success('Product deleted successfully');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete product');
+      console.error('Failed to delete product:', err);
+      toast.error(err.response?.data?.error || 'Failed to delete product');
+    } finally {
+      setDeleteDialogOpen(false);
+      setProductToDelete(null);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setProductToDelete(null);
   };
 
   if (loading) {
@@ -91,6 +118,50 @@ function AllProducts() {
 
   return (
     <div className="p-8 transition-all duration-300">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" className="font-bold">
+          Confirm Product Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description" className="text-gray-700">
+            Are you sure you want to delete this product? This action cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleDeleteCancel}
+            className="text-gray-600 hover:bg-gray-100"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            className="hover:bg-red-50"
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Product Management</h1>
         <div className="flex space-x-4">
@@ -208,9 +279,11 @@ function AllProducts() {
                             )}
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">{product.name.length >= 25
-    ? product.name.slice(0, 25) 
-    : product.name.padEnd(25, ' ')}</div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {product.name.length >= 25
+                                ? product.name.slice(0, 25) 
+                                : product.name.padEnd(25, ' ')}
+                            </div>
                             <div className="text-sm text-gray-500">
                               {product.description?.substring(0, 30) || 'No description'}...
                             </div>
@@ -242,8 +315,8 @@ function AllProducts() {
                             <FiEdit2 />
                           </Link>
                           <button 
-                            className="text-red-600 hover:text-red-900"
-                            onClick={() => deleteProduct(product._id)}
+                            className="text-red-600 hover:text-red-900 cursor-pointer"
+                            onClick={() => handleDeleteClick(product._id)}
                           >
                             <FiTrash2 />
                           </button>

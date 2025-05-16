@@ -17,33 +17,37 @@ function ProductForm() {
     image: { url: '', filename: '' }
   });
   
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(isEditMode);
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch product if in edit mode
+  // Fetch product if in edit mode and all categories
   useEffect(() => {
-    if (!isEditMode) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchProduct = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`http://localhost:3000/api/product/${id}`);
-        setProduct({
-          ...response.data,
-          price: response.data.price.toString(), // Ensure proper formatting
-          stock: response.data.stock.toString()
-        });
-        setLoading(false);
+        // Fetch categories first
+        const categoriesResponse = await axios.get('http://localhost:3000/api/categories');
+        setCategories(categoriesResponse.data);
+
+        if (isEditMode) {
+          // Then fetch product data if in edit mode
+          const productResponse = await axios.get(`http://localhost:3000/api/product/${id}`);
+          setProduct({
+            ...productResponse.data,
+            price: productResponse.data.price.toString(),
+            stock: productResponse.data.stock.toString(),
+            category: productResponse.data.category?._id || ''
+          });
+        }
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to fetch product');
+        setError(err.response?.data?.error || 'Failed to fetch data');
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchProduct();
+    fetchData();
   }, [id, isEditMode]);
 
   const handleChange = (e) => {
@@ -72,7 +76,8 @@ function ProductForm() {
       const productData = {
         ...product,
         price: parseFloat(product.price),
-        stock: parseInt(product.stock) || 0
+        stock: parseInt(product.stock) || 0,
+        category: product.category // Already contains the category ID
       };
 
       if (isEditMode) {
@@ -148,14 +153,20 @@ function ProductForm() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
-              <input
-                type="text"
+              <select
                 name="category"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={product.category}
                 onChange={handleChange}
                 required
-              />
+              >
+                <option value="">Select a category</option>
+                {categories.map(category => (
+                  <option key={category._id} value={category._id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

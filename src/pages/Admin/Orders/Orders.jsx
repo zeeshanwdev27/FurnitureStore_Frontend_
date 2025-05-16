@@ -12,7 +12,19 @@ import {
 } from "react-icons/fi";
 import { BsBoxSeam } from "react-icons/bs";
 import axios from "axios";
-import ROISER from "../../../assets/ROISER.png"
+import ROISER from "../../../assets/ROISER.png";
+
+import { FiTrash2 } from "react-icons/fi"; //Delete Icon
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Button,
+} from "@mui/material";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Orders() {
   const [orders, setOrders] = useState([]);
@@ -24,6 +36,9 @@ function Orders() {
   const [selectedPayment, setSelectedPayment] = useState("All");
   const [selectedShipping, setSelectedShipping] = useState("All");
   const [viewOrder, setViewOrder] = useState(null);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState(null);
 
   // Filter options
   const statuses = [
@@ -62,41 +77,51 @@ function Orders() {
     fetchOrders();
   }, []);
 
-// Filter orders based on search and filters
-const filteredOrders = orders.filter((order) => {
-  // Order number match (case insensitive)
-  const displayedOrderNumber = `ORD-${order._id.slice(-6).toUpperCase()}`;
-  const orderNumberMatch = displayedOrderNumber.includes(searchTerm.toUpperCase());
-  
-  // Customer info match (case insensitive)
-  const customerMatch = 
-    (order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    order.shippingInfo.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.shippingInfo.lastName.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter orders based on search and filters
+  const filteredOrders = orders.filter((order) => {
+    // Order number match (case insensitive)
+    const displayedOrderNumber = `ORD-${order._id.slice(-6).toUpperCase()}`;
+    const orderNumberMatch = displayedOrderNumber.includes(
+      searchTerm.toUpperCase()
+    );
 
-  // Status filter (case insensitive)
-  const matchesStatus =
-    selectedStatus === "All" || 
-    order.status.toLowerCase() === selectedStatus.toLowerCase();
+    // Customer info match (case insensitive)
+    const customerMatch =
+      order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.shippingInfo.firstName
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      order.shippingInfo.lastName
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
-  // Payment filter - simplified logic
-  const matchesPayment =
-    selectedPayment === "All" ||
-    (order.paymentInfo.status ? 
-      order.paymentInfo.status.toLowerCase() === selectedPayment.toLowerCase() :
-      selectedPayment === "Pending");
+    // Status filter (case insensitive)
+    const matchesStatus =
+      selectedStatus === "All" ||
+      order.status.toLowerCase() === selectedStatus.toLowerCase();
 
-  // Shipping filter - use actual data without assumptions
-  const matchesShipping =
-    selectedShipping === "All" ||
-    (order.shippingInfo.shippingMethod?.toLowerCase() === selectedShipping.toLowerCase());
+    // Payment filter - simplified logic
+    const matchesPayment =
+      selectedPayment === "All" ||
+      (order.paymentInfo.status
+        ? order.paymentInfo.status.toLowerCase() ===
+          selectedPayment.toLowerCase()
+        : selectedPayment === "Pending");
 
-  // Return true if either order number matches OR other filters match
-  return (orderNumberMatch || customerMatch) && 
-         matchesStatus && 
-         matchesPayment && 
-         matchesShipping;
-});
+    // Shipping filter - use actual data without assumptions
+    const matchesShipping =
+      selectedShipping === "All" ||
+      order.shippingInfo.shippingMethod?.toLowerCase() ===
+        selectedShipping.toLowerCase();
+
+    // Return true if either order number matches OR other filters match
+    return (
+      (orderNumberMatch || customerMatch) &&
+      matchesStatus &&
+      matchesPayment &&
+      matchesShipping
+    );
+  });
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
@@ -170,12 +195,11 @@ const filteredOrders = orders.filter((order) => {
   }
 
   // Add this function to your component
-const handlePrintInvoice = (order) => {
-  
-  const printWindow = window.open("", "_blank");
-  const logoBase64 = ROISER;
-  
-  const invoiceContent = `
+  const handlePrintInvoice = (order) => {
+    const printWindow = window.open("", "_blank");
+    const logoBase64 = ROISER;
+
+    const invoiceContent = `
   <html>
     <head>
       <title>Invoice - ORD-${order._id.slice(-6).toUpperCase()}</title>
@@ -397,11 +421,15 @@ const handlePrintInvoice = (order) => {
         <div class="grid">
           <div class="card">
             <h3>Bill To</h3>
-            <p class="text-bold">${order.shippingInfo.firstName} ${order.shippingInfo.lastName}</p>
+            <p class="text-bold">${order.shippingInfo.firstName} ${
+      order.shippingInfo.lastName
+    }</p>
             <p>${order.shippingInfo.email}</p>
             <p>${order.shippingInfo.phone}</p>
             <p>${order.shippingInfo.address}</p>
-            <p>${order.shippingInfo.city}, ${order.shippingInfo.state} ${order.shippingInfo.zipCode}</p>
+            <p>${order.shippingInfo.city}, ${order.shippingInfo.state} ${
+      order.shippingInfo.zipCode
+    }</p>
           </div>
           
           <div class="card">
@@ -424,19 +452,27 @@ const handlePrintInvoice = (order) => {
             </tr>
           </thead>
           <tbody>
-            ${order.items.map(item => `
+            ${order.items
+              .map(
+                (item) => `
               <tr>
                 <td>
-                  <div class="text-bold">${item.product?.name || "Product"}</div>
+                  <div class="text-bold">${
+                    item.product?.name || "Product"
+                  }</div>
                   <div style="font-size: 0.75rem; color: var(--gray); margin-top: 0.25rem;">
-                    SKU: ${item.product?._id.slice(-6).toUpperCase() || 'N/A'}
+                    SKU: ${item.product?._id.slice(-6).toUpperCase() || "N/A"}
                   </div>
                 </td>
                 <td class="text-right">$${item.price.toFixed(2)}</td>
                 <td class="text-right">${item.quantity}</td>
-                <td class="text-right">$${(item.price * item.quantity).toFixed(2)}</td>
+                <td class="text-right">$${(item.price * item.quantity).toFixed(
+                  2
+                )}</td>
               </tr>
-            `).join('')}
+            `
+              )
+              .join("")}
           </tbody>
         </table>
         
@@ -445,12 +481,16 @@ const handlePrintInvoice = (order) => {
             <span>Subtotal:</span>
             <span>$${order.paymentInfo.subtotal.toFixed(2)}</span>
           </div>
-          ${order.paymentInfo.discount > 0 ? `
+          ${
+            order.paymentInfo.discount > 0
+              ? `
             <div class="total-row">
               <span>Discount:</span>
               <span>-$${order.paymentInfo.discount.toFixed(2)}</span>
             </div>
-          ` : ''}
+          `
+              : ""
+          }
           <div class="total-row">
             <span>Shipping:</span>
             <span>$${order.paymentInfo.shipping.toFixed(2)}</span>
@@ -490,12 +530,99 @@ const handlePrintInvoice = (order) => {
   </html>
   `;
 
-  printWindow.document.open();
-  printWindow.document.write(invoiceContent);
-  printWindow.document.close();
-};
+    printWindow.document.open();
+    printWindow.document.write(invoiceContent);
+    printWindow.document.close();
+  };
+
+  //Handle Delete Order & Confirmation
+  const handleDeleteClick = (orderId) => {
+    setOrderToDelete(orderId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!orderToDelete) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `http://localhost:3000/api/admin/orders/${orderToDelete}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setOrders(orders.filter((order) => order._id !== orderToDelete));
+      toast.success("Order deleted successfully");
+    } catch (err) {
+      console.error("Failed to delete order:", err);
+      toast.error(err.response?.data?.error || "Failed to delete order");
+    } finally {
+      setDeleteDialogOpen(false);
+      setOrderToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setOrderToDelete(null);
+  };
+
   return (
     <div className="p-8 transition-all duration-300">
+      {/* Toast */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
+      {/* Confirmation Dialog for Delete */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={handleDeleteCancel}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title" className="font-bold">
+          Confirm Order Deletion
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id="alert-dialog-description"
+            className="text-gray-700"
+          >
+            Are you sure you want to delete this order? This action cannot be
+            undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleDeleteCancel}
+            className="text-gray-600 hover:bg-gray-100"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            className="hover:bg-red-50"
+            autoFocus
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Order Management</h1>
       </div>
@@ -687,16 +814,17 @@ const handlePrintInvoice = (order) => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       ${order.paymentInfo.total.toFixed(2)}
                     </td>
+
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
                           onClick={() => setViewOrder(order)}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
                         >
                           View
                         </button>
                         <button
-                          className="text-gray-600 hover:text-gray-900"
+                          className="text-gray-600 hover:text-gray-900 cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation(); // Prevent row click events from interfering
                             handlePrintInvoice(order); // Pass the current row's order data
@@ -704,6 +832,17 @@ const handlePrintInvoice = (order) => {
                           title="Print Invoice" // Add tooltip
                         >
                           <FiPrinter />
+                        </button>
+                        {/* Delete Btn */}
+                        <button
+                          className="text-red-600 hover:text-red-900 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(order._id);
+                          }}
+                          title="Delete Order"
+                        >
+                          <FiTrash2 />
                         </button>
                       </div>
                     </td>
