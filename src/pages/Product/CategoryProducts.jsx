@@ -7,6 +7,7 @@ function CategoryProducts() {
   const { categoryName } = useParams(); // e.g., "Sofas"
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null)
   const [category, setCategory] = useState(null); // Add state for category details
 
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ function CategoryProducts() {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
+        setLoading(true);
         const response = await axios.get(
           `http://localhost:3000/api/category/${categoryName}`
         );
@@ -33,6 +35,26 @@ function CategoryProducts() {
 
     fetchCategoryProducts();
   }, [categoryName]);
+
+
+    if (loading) {
+    return (
+      <div className="p-8 flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#885B3A]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
+  if (!products.length) return <div className='lg:px-35 py-4 px-10'>No products found</div>
 
   const handleProductClick = (id) => {
     navigate(`/product/${id}`);

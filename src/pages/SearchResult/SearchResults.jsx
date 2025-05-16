@@ -2,20 +2,53 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 function SearchResults() {
-    
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   const query = new URLSearchParams(location.search).get("q");
 
-  useEffect(() => {
+useEffect(() => {
+  const fetchData = async () => {
     if (!query) return;
-    fetch(`http://localhost:3000/api/search?query=${query}`)
-      .then((res) => res.json())
-      .then((data) => setProducts(data.products || []))
-      .catch((err) => console.log(err));
-  }, [query]);
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`http://localhost:3000/api/search?query=${query}`);
+      const data = await response.json();
+      setProducts(data.products || []);
+    } catch (err) {
+      console.error("Failed to fetch dashboard data:", err);
+      setError("Failed to load search results");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [query]);
+
+    if (loading) {
+    return (
+      <div className="p-8 flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#885B3A]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
 
   const handleProductClick = (id) => {
     navigate(`/product/${id}`);
@@ -37,7 +70,7 @@ function SearchResults() {
                 alt={product.name}
                 className="w-full h-48 object-cover mb-2"
               />
-              <p className="text-sm text-gray-500">{product.category}</p>
+              <p className="text-sm text-gray-500">{product.category?.name}</p>
               <p className="font-bold lg:text-lg">{product.name}</p>
               <div className="text-[#885B3A]">★ ★ ★ ★ ☆</div>
               <p className="text-black font-semibold">${product.price}</p>

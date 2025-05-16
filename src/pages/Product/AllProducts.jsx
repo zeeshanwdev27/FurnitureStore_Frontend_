@@ -6,12 +6,14 @@ function AllProducts() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        setLoading(true)
         const response = await fetch("http://localhost:3000/api/all-products")
         const data = await response.json()
         if (!response.ok) throw new Error(data.error || "Failed to fetch products")
@@ -30,8 +32,23 @@ function AllProducts() {
     navigate(`/product/${id}`);
   };
 
-  if (loading) return <div className='lg:px-35 py-4 px-10'>Loading products...</div>
-  if (error) return <div className='lg:px-35 py-4 px-10 text-red-500'>Error: {error}</div>
+  if (loading) {
+    return (
+      <div className="p-8 flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#885B3A]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
   if (!products.length) return <div className='lg:px-35 py-4 px-10'>No products found</div>
 
   return (
