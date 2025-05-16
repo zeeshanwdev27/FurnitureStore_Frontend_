@@ -315,13 +315,13 @@ function Users() {
                       <div className="flex space-x-2">
                         <button 
                           onClick={() => handleEditUser(user)}
-                          className="text-indigo-600 hover:text-indigo-900"
+                          className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
                         >
                           <FiEdit2 />
                         </button>
                         <button 
                           onClick={() => handleDeleteUser(user._id)}
-                          className="text-red-600 hover:text-red-900"
+                          className="text-red-600 hover:text-red-900 cursor-pointer"
                         >
                           <FiTrash2 />
                         </button>
