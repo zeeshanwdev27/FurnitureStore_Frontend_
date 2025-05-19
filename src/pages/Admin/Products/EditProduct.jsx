@@ -27,49 +27,52 @@ function ProductForm() {
   const getAuthToken = () => {
     const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
     if (!token) {
+      toast.error('Please login to continue');
+      navigate('/admin/login');
       throw new Error('No authentication token found');
     }
     return token;
   };
 
   // Fetch product if in edit mode and all categories
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const token = getAuthToken();
-      
-      // Fetch categories first
-      const categoriesResponse = await axios.get('http://localhost:3000/api/categories', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setCategories(categoriesResponse.data);
-
-      if (isEditMode) {
-        // Then fetch product data if in edit mode
-        const productResponse = await axios.get(`http://localhost:3000/api/product/${id}`, { // Note: Changed from /api/products/ to /api/product/
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = getAuthToken();
+        
+        // Fetch categories first
+        const categoriesResponse = await axios.get('http://localhost:3000/api/categories', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
-        // Use the same structure as your working version
-        setProduct({
-          ...productResponse.data,
-          price: productResponse.data.price.toString(),
-          stock: productResponse.data.stock.toString(),
-          category: productResponse.data.category?._id || ''
-        });
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to fetch data');
-      if (err.response?.status === 401) {
-        navigate('/admin/login');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+        setCategories(categoriesResponse.data);
 
-  fetchData();
-}, [id, isEditMode, navigate]);
+        if (isEditMode) {
+          // Then fetch product data if in edit mode
+          const productResponse = await axios.get(`http://localhost:3000/api/product/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          setProduct({
+            ...productResponse.data,
+            price: productResponse.data.price.toString(),
+            stock: productResponse.data.stock.toString(),
+            category: productResponse.data.category?._id || ''
+          });
+        }
+      } catch (err) {
+        const errorMessage = err.response?.data?.error || 'Failed to fetch data';
+        toast.error(errorMessage);
+        console.error('Fetch error:', err);
+        if (err.response?.status === 401) {
+          navigate('/admin/login');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [id, isEditMode, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -94,9 +97,18 @@ useEffect(() => {
     setIsSubmitting(true);
     
     try {
-      // Validate required fields
-      if (!product.name.trim() || !product.price || !product.category) {
-        throw new Error('Please fill in all required fields');
+      // Validate required fields with specific messages
+      if (!product.name.trim()) {
+        toast.error('Product name is required');
+        return;
+      }
+      if (!product.price) {
+        toast.error('Product price is required');
+        return;
+      }
+      if (!product.category) {
+        toast.error('Please select a category');
+        return;
       }
 
       const token = getAuthToken();
@@ -112,17 +124,20 @@ useEffect(() => {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success('Product updated successfully!');
+        setTimeout(() => navigate('/admin/allproducts'), 1500);
       } else {
         await axios.post('http://localhost:3000/api/products', productData, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success('Product created successfully!');
+        setTimeout(() => navigate('/admin/allproducts'), 1500);
       }
-      
-      navigate('/admin/allproducts');
     } catch (err) {
-      toast.error(err.response?.data?.error || err.message || 
-        (isEditMode ? 'Failed to update product' : 'Failed to create product'));
+      const errorMessage = err.response?.data?.error || 
+                         err.message || 
+                         (isEditMode ? 'Failed to update product' : 'Failed to create product');
+      toast.error(errorMessage);
+      console.error('Submission error:', err);
       if (err.response?.status === 401) {
         navigate('/admin/login');
       }
@@ -142,8 +157,8 @@ useEffect(() => {
   }
 
   return (
-    <div className="p-8 transition-all duration-300">
-            {/* Toast */}
+    <div className="p-8 transition-all duration-300 relative">
+      {/* Enhanced Toast Container */}
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -154,7 +169,10 @@ useEffect(() => {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="colored"
+        style={{ zIndex: 10000 }}
       />
+      
       <div className="flex items-center mb-6">
         <button 
           onClick={() => navigate('/admin/allproducts')}
@@ -178,7 +196,6 @@ useEffect(() => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={product.name}
                 onChange={handleChange}
-                required
               />
             </div>
 
@@ -189,7 +206,6 @@ useEffect(() => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={product.category}
                 onChange={handleChange}
-                required
               >
                 <option value="">Select a category</option>
                 {categories.map(category => (
@@ -210,7 +226,6 @@ useEffect(() => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={product.price}
                 onChange={handleChange}
-                required
               />
             </div>
 
@@ -267,7 +282,7 @@ useEffect(() => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
             >
               <FiSave className="mr-2" />
               {isSubmitting ? 'Saving...' : isEditMode ? 'Save Changes' : 'Add Product'}

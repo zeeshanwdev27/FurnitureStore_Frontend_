@@ -25,6 +25,8 @@ function AddProduct() {
       localStorage.getItem("adminToken") ||
       sessionStorage.getItem("adminToken");
     if (!token) {
+      toast.error("Please login to continue");
+      navigate("/admin/login");
       throw new Error("No authentication token found");
     }
     return token;
@@ -43,7 +45,9 @@ function AddProduct() {
         );
         setCategories(response.data);
       } catch (err) {
-        toast.error(err.response?.data?.error || "Failed to fetch categories");
+        const errorMessage = err.response?.data?.error || "Failed to fetch categories";
+        toast.error(errorMessage);
+        console.error("Error fetching categories:", err);
         if (err.response?.status === 401) {
           navigate("/admin/login");
         }
@@ -76,8 +80,17 @@ function AddProduct() {
 
     try {
       // Validate required fields
-      if (!product.name.trim() || !product.price || !product.category) {
-        throw new Error("Please fill in all required fields");
+      if (!product.name.trim()) {
+        toast.error("Product name is required");
+        return;
+      }
+      if (!product.price) {
+        toast.error("Product price is required");
+        return;
+      }
+      if (!product.category) {
+        toast.error("Please select a category");
+        return;
       }
 
       const token = getAuthToken();
@@ -87,16 +100,23 @@ function AddProduct() {
         stock: parseInt(product.stock) || 0,
       };
 
-      await axios.post("http://localhost:3000/api/products", productData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        "http://localhost:3000/api/products",
+        productData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       toast.success("Product created successfully!");
-      navigate("/admin/allproducts");
+      setTimeout(() => navigate("/admin/allproducts"), 1500);
     } catch (err) {
-      toast.error(
-        err.response?.data?.error || err.message || "Failed to create product"
-      );
+      const errorMessage = err.response?.data?.error || 
+                         err.message || 
+                         "Failed to create product";
+      toast.error(errorMessage);
+      console.error("Error creating product:", err);
+      
       if (err.response?.status === 401) {
         navigate("/admin/login");
       }
@@ -106,8 +126,8 @@ function AddProduct() {
   };
 
   return (
-    <div className="p-8 transition-all duration-300">
-      {/* Toast */}
+    <div className="p-8 transition-all duration-300 relative">
+      {/* Toast Container - Must be rendered once at root level */}
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -118,7 +138,10 @@ function AddProduct() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        theme="colored"
+        style={{ zIndex: 10000 }}
       />
+
       <div className="flex items-center mb-6">
         <button
           onClick={() => navigate("/admin/allproducts")}
@@ -129,7 +152,7 @@ function AddProduct() {
         <h1 className="text-3xl font-bold text-gray-800">Add New Product</h1>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6 max-w-3xl">
+      <div className="bg-white rounded-lg shadow p-6 max-w-3xl ">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -242,7 +265,7 @@ function AddProduct() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
             >
               <FiSave className="mr-2" />
               {isSubmitting ? "Saving..." : "Add Product"}
