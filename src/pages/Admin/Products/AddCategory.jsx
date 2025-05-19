@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FiSave, FiArrowLeft, FiTrash2 } from "react-icons/fi";
-import { toast } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function AddCategory() {
@@ -121,6 +121,18 @@ function AddCategory() {
 
   return (
     <div className="p-8 transition-all duration-300">
+      {/* Toast */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <div className="flex items-center mb-6">
         <button
           onClick={() => navigate("/admin/allproducts")}

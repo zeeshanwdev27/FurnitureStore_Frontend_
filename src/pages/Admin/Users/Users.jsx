@@ -12,6 +12,8 @@ import {
 } from 'react-icons/fi';
 import { BsShieldLock, BsPersonCheck, BsPersonX } from 'react-icons/bs';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -30,7 +32,7 @@ function Users() {
   const roles = ['All', 'Admin', 'Editor', 'Customer'];
   const statuses = ['All', 'Active', 'Inactive', 'Suspended'];
 
-    const getAuthToken = () => {
+  const getAuthToken = () => {
     const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
     if (!token) {
       throw new Error('No authentication token found');
@@ -51,6 +53,7 @@ function Users() {
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to fetch users');
         setLoading(false);
+        toast.error(err.response?.data?.error || 'Failed to fetch users');
       }
     };
 
@@ -100,13 +103,15 @@ function Users() {
 
         // If user is being suspended, show confirmation
         if (currentUser.status === 'Suspended') {
-          alert(`${currentUser.username} has been suspended and can no longer log in.`);
+          toast.warning(`${currentUser.username} has been suspended and can no longer log in.`);
         }
         
         // Update local state
         setUsers(users.map(user => 
           user._id === currentUser._id ? response.data.user : user
         ));
+        
+        toast.success('User updated successfully');
       } else {
         // Add new user
         const userData = {
@@ -123,15 +128,22 @@ function Users() {
         
         // Add to local state
         setUsers([...users, response.data.user]);
+        toast.success('User added successfully');
       }
       
       setShowUserModal(false);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save user');
+      const errorMsg = err.response?.data?.error || 'Failed to save user';
+      setError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
   const handleDeleteUser = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this user?')) {
+      return;
+    }
+    
     const token = getAuthToken()
     try {
       await axios.delete(`http://localhost:3000/api/admin/users/${id}`,{
@@ -140,8 +152,11 @@ function Users() {
       
       // Update local state
       setUsers(users.filter(user => user._id !== id));
+      toast.success('User deleted successfully');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete user');
+      const errorMsg = err.response?.data?.error || 'Failed to delete user';
+      setError(errorMsg);
+      toast.error(errorMsg);
     }
   };
 
@@ -175,6 +190,19 @@ function Users() {
 
   return (
     <div className="p-8 transition-all duration-300">
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
         <button 

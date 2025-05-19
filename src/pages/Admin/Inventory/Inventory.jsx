@@ -12,7 +12,7 @@ import {
   MdOutlineLowPriority 
 } from 'react-icons/md';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { ToastContainer,toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
@@ -210,10 +210,8 @@ function Inventory() {
 
   if (loading) {
     return (
-      <div className="p-8 transition-all duration-300">
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        </div>
+      <div className="p-8 flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
@@ -237,6 +235,17 @@ function Inventory() {
 
   return (
     <div className="p-8 transition-all duration-300">
+            <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Inventory Management</h1>
         <div className="flex space-x-2">

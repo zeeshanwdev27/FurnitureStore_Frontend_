@@ -10,7 +10,7 @@ export const useAdminAuth = () => useContext(AdminAuthContext);
 
 export const AdminAuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
+   const [isVerifying, setIsVerifying] = useState(true);
   const navigate = useNavigate();
 
   // Check for existing valid token on initial load
@@ -19,7 +19,7 @@ export const AdminAuthProvider = ({ children }) => {
       const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
       
       if (!token) {
-        setLoading(false);
+        setIsVerifying(false);
         return;
       }
 
@@ -28,6 +28,8 @@ export const AdminAuthProvider = ({ children }) => {
         const response = await axios.get('http://localhost:3000/api/admin/verify-token', {
           headers: { Authorization: `Bearer ${token}` }
         });
+
+        console.log(response)
 
         if (response.data.isValid) {
           setAdmin({ token });
@@ -38,7 +40,7 @@ export const AdminAuthProvider = ({ children }) => {
         console.error("Token verification failed:", err);
         clearToken();
       } finally {
-        setLoading(false);
+        setIsVerifying(false); // Mark verification complete
       }
     };
 
@@ -101,18 +103,18 @@ const login = async (token, rememberMe) => {
     return admin.token;
   };
 
-  return (
-    <AdminAuthContext.Provider 
-      value={{ 
-        admin,
-        login,
-        logout,
-        getAuthToken,
-        isAuthenticated: !!admin?.token,
-        isLoading: loading
-      }}
-    >
-      {!loading && children}
-    </AdminAuthContext.Provider>
-  );
-};
+return (
+  <AdminAuthContext.Provider 
+    value={{ 
+      admin,
+      login,
+      logout,
+      getAuthToken,
+      isAuthenticated: !!admin?.token,
+      isVerifying,
+    }}
+  >
+    {children}
+  </AdminAuthContext.Provider>
+);
+}
