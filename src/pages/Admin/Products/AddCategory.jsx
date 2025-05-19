@@ -2,47 +2,72 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FiSave, FiArrowLeft, FiTrash2 } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function AddCategory() {
   const navigate = useNavigate();
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [addError, setAddError] = useState(null);
-  const [addSuccess, setAddSuccess] = useState(null);
-  const [deleteError, setDeleteError] = useState(null);
-  const [deleteSuccess, setDeleteSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Function to get auth token
+  const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
 
   // Fetch all categories on component mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/categories');
+        const token = getAuthToken();
+        const response = await axios.get('http://localhost:3000/api/categories', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setCategories(response.data);
       } catch (err) {
-        setAddError('Failed to fetch categories');
+        toast.error(err.response?.data?.error || 'Failed to fetch categories');
+        if (err.response?.status === 401) {
+          navigate('/admin/login');
+        }
       }
     };
     fetchCategories();
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!category.trim()) {
+      toast.error('Category name cannot be empty');
+      return;
+    }
+
     setIsSubmitting(true);
-    setAddError(null);
-    setAddSuccess(null);
     
     try {
-      await axios.post('http://localhost:3000/api/categories', { name: category });
-      setAddSuccess('Category added successfully!');
+      const token = getAuthToken();
+      await axios.post('http://localhost:3000/api/categories', 
+        { name: category },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success('Category added successfully!');
       setCategory('');
       // Refresh categories list
-      const response = await axios.get('http://localhost:3000/api/categories');
+      const response = await axios.get('http://localhost:3000/api/categories', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setCategories(response.data);
     } catch (err) {
-      setAddError(err.response?.data?.error || 'Failed to create category');
+      toast.error(err.response?.data?.error || 'Failed to create category');
+      if (err.response?.status === 401) {
+        navigate('/admin/login');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -50,24 +75,32 @@ function AddCategory() {
 
   const handleDelete = async () => {
     if (!selectedCategory) {
-      setDeleteError('Please select a category to delete');
+      toast.error('Please select a category to delete');
       return;
     }
 
     setIsDeleting(true);
-    setDeleteError(null);
-    setDeleteSuccess(null);
 
     try {
-      await axios.delete(`http://localhost:3000/api/categories/${selectedCategory}`);
-      const deletedCategory = categories.find(cat => cat._id === selectedCategory);
-      setDeleteSuccess(`"${deletedCategory.name}" category deleted successfully!`);
+      const token = getAuthToken();
+      const categoryToDelete = categories.find(cat => cat._id === selectedCategory);
+      
+      await axios.delete(`http://localhost:3000/api/categories/${selectedCategory}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(`"${categoryToDelete.name}" category deleted successfully!`);
       setSelectedCategory('');
       // Refresh categories list
-      const response = await axios.get('http://localhost:3000/api/categories');
+      const response = await axios.get('http://localhost:3000/api/categories', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setCategories(response.data);
     } catch (err) {
-      setDeleteError(err.response?.data?.error || 'Failed to delete category');
+      toast.error(err.response?.data?.error || 'Failed to delete category');
+      if (err.response?.status === 401) {
+        navigate('/admin/login');
+      }
     } finally {
       setIsDeleting(false);
     }
@@ -89,17 +122,6 @@ function AddCategory() {
         {/* Add Category Form */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Add New Category</h2>
-          
-          {addError && (
-            <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
-              <p>{addError}</p>
-            </div>
-          )}
-          {addSuccess && (
-            <div className="mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4">
-              <p>{addSuccess}</p>
-            </div>
-          )}
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
@@ -130,17 +152,6 @@ function AddCategory() {
         {/* Delete Category Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Delete Category</h2>
-          
-          {deleteError && (
-            <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
-              <p>{deleteError}</p>
-            </div>
-          )}
-          {deleteSuccess && (
-            <div className="mb-4 bg-green-100 border-l-4 border-green-500 text-green-700 p-4">
-              <p>{deleteSuccess}</p>
-            </div>
-          )}
           
           <div className="space-y-6">
             <div>

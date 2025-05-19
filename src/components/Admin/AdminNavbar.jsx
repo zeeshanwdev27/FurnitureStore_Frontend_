@@ -73,7 +73,7 @@ function AdminNavbar() {
         
         <div className="absolute bottom-0 w-full p-4 border-t border-indigo-700">
           <Link 
-            to="/logout" 
+            to="/admin/logout" 
             className="flex items-center p-2 text-white hover:bg-indigo-700 rounded-lg"
           >
             <FiLogOut />

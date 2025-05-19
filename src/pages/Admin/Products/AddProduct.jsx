@@ -2,24 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function AddProduct() {
   const [categories, setCategories] = useState([]);
   const navigate = useNavigate();
-
-  // Add this useEffect to fetch categories
-useEffect(() => {
-  const fetchCategories = async () => {
-    try {
-      const response = await axios.get('http://localhost:3000/api/categories');
-      setCategories(response.data);
-    } catch (err) {
-      console.error("Failed to fetch categories", err);
-    }
-  };
-  fetchCategories();
-}, []);
-
 
   const [product, setProduct] = useState({
     name: '',
@@ -29,8 +17,35 @@ useEffect(() => {
     stock: '',
     image: { url: '', filename: '' }
   });
-  const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Function to get auth token
+  const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const token = getAuthToken();
+        const response = await axios.get('http://localhost:3000/api/categories', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCategories(response.data);
+      } catch (err) {
+        toast.error(err.response?.data?.error || 'Failed to fetch categories');
+        if (err.response?.status === 401) {
+          navigate('/admin/login');
+        }
+      }
+    };
+    fetchCategories();
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -53,19 +68,31 @@ useEffect(() => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError(null);
     
     try {
+      // Validate required fields
+      if (!product.name.trim() || !product.price || !product.category) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      const token = getAuthToken();
       const productData = {
         ...product,
         price: parseFloat(product.price),
         stock: parseInt(product.stock) || 0
       };
 
-      await axios.post('http://localhost:3000/api/products', productData);
+      await axios.post('http://localhost:3000/api/products', productData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Product created successfully!');
       navigate('/admin/allproducts');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to create product');
+      toast.error(err.response?.data?.error || err.message || 'Failed to create product');
+      if (err.response?.status === 401) {
+        navigate('/admin/login');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -84,12 +111,6 @@ useEffect(() => {
       </div>
 
       <div className="bg-white rounded-lg shadow p-6 max-w-3xl">
-        {error && (
-          <div className="mb-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
-            <p>{error}</p>
-          </div>
-        )}
-        
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -104,32 +125,21 @@ useEffect(() => {
               />
             </div>
 
-            {/* <div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
-              <input
-                type="text"
+              <select
                 name="category"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 value={product.category}
                 onChange={handleChange}
                 required
-              />
-            </div> */}
-            <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
-<select
-  name="category"
-  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-  value={product.category}
-  onChange={handleChange}
-  required
->
-  <option value="">Select a category</option>
-  {categories.map(cat => (
-    <option key={cat._id} value={cat._id}>{cat.name}</option>
-  ))}
-</select>
-</div>
+              >
+                <option value="">Select a category</option>
+                {categories.map(cat => (
+                  <option key={cat._id} value={cat._id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Price*</label>
@@ -184,6 +194,10 @@ useEffect(() => {
                     src={product.image.url} 
                     alt="Product preview" 
                     className="h-32 object-contain border rounded-md"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
+                    }}
                   />
                 </div>
               )}

@@ -12,6 +12,9 @@ import {
   MdOutlineLowPriority 
 } from 'react-icons/md';
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 function Inventory() {
   const [inventory, setInventory] = useState([]);
@@ -26,26 +29,44 @@ function Inventory() {
   const [restockError, setRestockError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Function to get auth token
+  const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
+
   // Fetch products from backend
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/all-products');
+        const token = getAuthToken();
+        const response = await axios.get('http://localhost:3000/api/all-products', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
         const inventoryData = response.data.map(product => ({
           id: product._id,
           product: product.name.length > 25 ? `${product.name.slice(0, 25)}...` : product.name,
           sku: product._id.slice(-6).toUpperCase(),
-          category: product.category?.name,
+          category: product.category?.name || 'Uncategorized',
           currentStock: product.stock || 0,
           lowStockThreshold: 10,
           status: getStockStatus(product.stock || 0, 10),
           image: product.image || { url: '' }
         }));
+        
         setInventory(inventoryData);
         setLoading(false);
       } catch (err) {
         setError(err.response?.data?.error || 'Failed to fetch inventory');
         setLoading(false);
+        if (err.response?.status === 401) {
+          // Handle unauthorized access
+          toast.error('Session expired. Please login again.');
+        }
       }
     };
 
@@ -60,7 +81,7 @@ function Inventory() {
   };
 
   // Get unique categories and statuses for filters
-  const categories = ['All', ...new Set(inventory.map(item => item.category))];
+  const categories = ['All', ...new Set(inventory.map(item => item.category).filter(Boolean))];
   const statuses = ['All', 'In Stock', 'Low Stock', 'Out of Stock'];
 
   // Filter inventory based on search and filters
@@ -101,11 +122,13 @@ function Inventory() {
 
       // Calculate new stock value
       const updatedStock = restockItem.currentStock + quantity;
+      const token = getAuthToken();
 
-      // Use dedicated stock endpoint
+      // Use dedicated stock endpoint with authentication
       const response = await axios.put(
         `http://localhost:3000/api/products/${restockItem.id}/stock`,
-        { stock: updatedStock }
+        { stock: updatedStock },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (!response.data.success) {
@@ -125,6 +148,7 @@ function Inventory() {
         )
       );
 
+      toast.success('Inventory updated successfully');
       setShowRestockModal(false);
       setRestockQuantity('');
     } catch (err) {
@@ -145,6 +169,7 @@ function Inventory() {
       }
 
       setRestockError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -154,20 +179,29 @@ function Inventory() {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:3000/api/all-products');
+      const token = getAuthToken();
+      const response = await axios.get('http://localhost:3000/api/all-products', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
       const inventoryData = response.data.map(product => ({
         id: product._id,
-        product: product.name,
+        product: product.name.length > 25 ? `${product.name.slice(0, 25)}...` : product.name,
         sku: product._id.slice(-6).toUpperCase(),
-        category: product.category,
+        category: product.category?.name || 'Uncategorized',
         currentStock: product.stock || 0,
         lowStockThreshold: 10,
         status: getStockStatus(product.stock || 0, 10),
         image: product.image || { url: '' }
       }));
+      
       setInventory(inventoryData);
+      toast.success('Inventory refreshed');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to refresh inventory');
+      if (err.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+      }
     } finally {
       setLoading(false);
     }

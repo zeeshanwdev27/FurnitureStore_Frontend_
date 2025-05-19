@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { FiSave, FiArrowLeft } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function ProductForm() {
   const { id } = useParams();
@@ -11,44 +13,63 @@ function ProductForm() {
   const [product, setProduct] = useState({
     name: '',
     description: '',
-    price: 0,
+    price: '0',
     category: '',
-    stock: 0,
+    stock: '0',
     image: { url: '', filename: '' }
   });
   
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(isEditMode);
-  const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Function to get auth token
+  const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
+
   // Fetch product if in edit mode and all categories
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch categories first
-        const categoriesResponse = await axios.get('http://localhost:3000/api/categories');
-        setCategories(categoriesResponse.data);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const token = getAuthToken();
+      
+      // Fetch categories first
+      const categoriesResponse = await axios.get('http://localhost:3000/api/categories', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCategories(categoriesResponse.data);
 
-        if (isEditMode) {
-          // Then fetch product data if in edit mode
-          const productResponse = await axios.get(`http://localhost:3000/api/product/${id}`);
-          setProduct({
-            ...productResponse.data,
-            price: productResponse.data.price.toString(),
-            stock: productResponse.data.stock.toString(),
-            category: productResponse.data.category?._id || ''
-          });
-        }
-      } catch (err) {
-        setError(err.response?.data?.error || 'Failed to fetch data');
-      } finally {
-        setLoading(false);
+      if (isEditMode) {
+        // Then fetch product data if in edit mode
+        const productResponse = await axios.get(`http://localhost:3000/api/product/${id}`, { // Note: Changed from /api/products/ to /api/product/
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        // Use the same structure as your working version
+        setProduct({
+          ...productResponse.data,
+          price: productResponse.data.price.toString(),
+          stock: productResponse.data.stock.toString(),
+          category: productResponse.data.category?._id || ''
+        });
       }
-    };
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to fetch data');
+      if (err.response?.status === 401) {
+        navigate('/admin/login');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchData();
-  }, [id, isEditMode]);
+  fetchData();
+}, [id, isEditMode, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -73,23 +94,38 @@ function ProductForm() {
     setIsSubmitting(true);
     
     try {
+      // Validate required fields
+      if (!product.name.trim() || !product.price || !product.category) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      const token = getAuthToken();
       const productData = {
         ...product,
         price: parseFloat(product.price),
         stock: parseInt(product.stock) || 0,
-        category: product.category // Already contains the category ID
+        category: product.category
       };
 
       if (isEditMode) {
-        await axios.put(`http://localhost:3000/api/products/${id}`, productData);
+        await axios.put(`http://localhost:3000/api/products/${id}`, productData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success('Product updated successfully!');
       } else {
-        await axios.post('http://localhost:3000/api/products', productData);
+        await axios.post('http://localhost:3000/api/products', productData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success('Product created successfully!');
       }
       
       navigate('/admin/allproducts');
     } catch (err) {
-      setError(err.response?.data?.error || 
+      toast.error(err.response?.data?.error || err.message || 
         (isEditMode ? 'Failed to update product' : 'Failed to create product'));
+      if (err.response?.status === 401) {
+        navigate('/admin/login');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -100,23 +136,6 @@ function ProductForm() {
       <div className="p-8 transition-all duration-300">
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-8 transition-all duration-300">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">
-          <p className="font-bold">Error</p>
-          <p>{error}</p>
-          <button 
-            onClick={() => navigate('/admin/allproducts')}
-            className="mt-2 text-indigo-600 hover:text-indigo-800"
-          >
-            Back to Products
-          </button>
         </div>
       </div>
     );
@@ -222,6 +241,10 @@ function ProductForm() {
                     src={product.image.url} 
                     alt="Product preview" 
                     className="h-32 object-contain border rounded-md"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
+                    }}
                   />
                 </div>
               )}

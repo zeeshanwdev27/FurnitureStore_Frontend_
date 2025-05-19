@@ -12,20 +12,26 @@ function AdminDashboard() {
   const navigate = useNavigate()
 
   // Fetch dashboard data
- useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch stats and recent orders in parallel without authentication
-        const [statsRes, ordersRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/analytics/stats', {
-            params: { range: 'Last 7 Days' }
-          }),
-          axios.get('http://localhost:3000/api/admin/orders', {
-            params: { limit: 5 }
-          })
-        ]);
+useEffect(() => {
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const [statsRes, ordersRes] = await Promise.all([
+        axios.get('http://localhost:3000/api/analytics/stats', {
+          params: { range: 'Last 7 Days' },
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get('http://localhost:3000/api/admin/orders', {
+          params: { limit: 5 },
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
 
         // Transform stats data to match UI format
         const transformedStats = [
@@ -63,9 +69,15 @@ function AdminDashboard() {
         setRecentOrders(ordersRes.data.orders);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
+      console.error('Failed to fetch dashboard data:', err);
+      if (err.response?.status === 401) {
+        // Token is invalid or expired
+        setError('Session expired. Please log in again.');
+        // You might want to redirect to login here
+      } else {
         setError('Failed to load dashboard data. Please try again.');
-      } finally {
+      }
+    } finally {
         setLoading(false);
       }
     };

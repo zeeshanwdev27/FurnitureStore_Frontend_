@@ -16,7 +16,8 @@ import AllProducts from "./pages/Product/AllProducts.jsx";
 import CategoryProducts from "./pages/Product/CategoryProducts.jsx";
 import ProductDetail from "./pages/Product/ProductDetail.jsx";
 
-// Utility components
+// Utility & context components
+import { AdminAuthProvider } from "./context/AdminAuthContext.jsx";
 import ScrollToTop from "./components/Scroll/ScrollToTop.jsx";
 import { CartProvider } from "./context/CartContext.jsx";
 import SearchResults from "./pages/SearchResult/SearchResults.jsx";
@@ -32,7 +33,7 @@ import OrderConfirm from "./pages/Checkout/OrderConfirm.jsx";
 
 // Protected route
 import ProtectedRoute from "./components/Protected/ProtectedRoute.jsx";
-
+import AdminProtectedRoute from "./components/Protected/AdminProtectedRoute.jsx";
 
 // Admin Routes
 import AdminLayout from "./components/Layout/AdminLayout.jsx";
@@ -44,9 +45,11 @@ import Users from "./pages/Admin/Users/Users.jsx";
 import AdminSettings from "./pages/Admin/AdminSettings/AdminSettings.jsx";
 import Analytics from "./pages/Admin/Analytics/Analytics.jsx";
 import EditProduct from "./pages/Admin/Products/EditProduct.jsx";
-import AddProduct from "./pages/Admin/Products/AddProduct.jsx"
-import AddCategory from "./pages/Admin/Products/AddCategory.jsx"
-import PromoCode from "./pages/Admin/Dashboard/PromoCode.jsx"
+import AddProduct from "./pages/Admin/Products/AddProduct.jsx";
+import AddCategory from "./pages/Admin/Products/AddCategory.jsx";
+import PromoCode from "./pages/Admin/Dashboard/PromoCode.jsx";
+import AdminSignin from "./pages/Admin/Auth/SignIn/AdminSignin.jsx";
+import AdminLogout from "./pages/Admin/Auth/Logout/AdminLogout.jsx";
 
 function HomePage() {
   return (
@@ -65,50 +68,60 @@ function HomePage() {
 function App() {
   return (
     <Router>
-      <ScrollToTop />
-      <CartProvider>
-        <Routes>
-          {/* Public routes */}
-          <Route path="/" element={<Layout><HomePage /></Layout>} />
-          <Route path="/products" element={<Layout><AllProducts /></Layout>} />
-          <Route path="/category/:categoryName" element={<Layout><CategoryProducts /></Layout>} />
-          <Route path="/product/:id" element={<Layout><ProductDetail /></Layout>} />
-          <Route path="/search" element={<Layout><SearchResults /></Layout>} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/logout" element={<Logout />} />
+      <AdminAuthProvider>
+        <CartProvider>
+          <ScrollToTop />
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Layout><HomePage /></Layout>} />
+            <Route path="/products" element={<Layout><AllProducts /></Layout>} />
+            <Route path="/category/:categoryName" element={<Layout><CategoryProducts /></Layout>} />
+            <Route path="/product/:id" element={<Layout><ProductDetail /></Layout>} />
+            <Route path="/search" element={<Layout><SearchResults /></Layout>} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/logout" element={<Logout />} />
 
-          {/* Protected routes */}
-          <Route path="/checkout" element={
-            <ProtectedRoute>
-              <Layout><Checkouts /></Layout>
-            </ProtectedRoute>
-          } />
-          
-          <Route path="/order-confirmation/:orderId" element={
-            <ProtectedRoute>
-              <Layout><OrderConfirm /></Layout>
-            </ProtectedRoute>
-          } />
+            {/* Protected routes */}
+            <Route path="/checkout" element={
+              <ProtectedRoute>
+                <Layout><Checkouts /></Layout>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/order-confirmation/:orderId" element={
+              <ProtectedRoute>
+                <Layout><OrderConfirm /></Layout>
+              </ProtectedRoute>
+            } />
 
-          {/* Admin Pages */}
-          <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard/></AdminLayout>} />
-          <Route path="/admin/allproducts" element={<AdminLayout><AllProduct/></AdminLayout>} />
-          <Route path="/admin/inventory" element={<AdminLayout><Inventory/></AdminLayout>} />
-          <Route path="/admin/orders" element={<AdminLayout><Orders/></AdminLayout>} />
-          <Route path="/admin/users" element={<AdminLayout><Users/></AdminLayout>} />
-          <Route path="/admin/settings" element={<AdminLayout><AdminSettings/></AdminLayout>} />
-          <Route path="/admin/analytics" element={<AdminLayout><Analytics/></AdminLayout>} />
-          <Route path="/admin/products/edit/:id" element={<AdminLayout><EditProduct/></AdminLayout>} />
-          <Route path="/admin/products/add" element={<AdminLayout><AddProduct/></AdminLayout>} />
-          <Route path="/admin/categories/add" element={<AdminLayout><AddCategory/></AdminLayout>} />
-          <Route path="/admin/create-discount" element={<AdminLayout><PromoCode/></AdminLayout>} />
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminSignin />} />
+            <Route path="/admin/logout" element={<AdminLogout />} />
 
+            {/* Protected Admin Routes */}
+            <Route element={<AdminProtectedRoute />}>
 
-          {/* 404 Page */}
-          <Route path="*" element={<Layout><div>404 Not Found</div></Layout>} />
-        </Routes>
-      </CartProvider>
+              <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+              
+              <Route path="/admin/allproducts" element={<AdminLayout><AllProduct /></AdminLayout>} />
+              <Route path="/admin/inventory" element={<AdminLayout><Inventory /></AdminLayout>} />
+              <Route path="/admin/orders" element={<AdminLayout><Orders /></AdminLayout>} />
+              <Route path="/admin/users" element={<AdminLayout><Users /></AdminLayout>} />
+              <Route path="/admin/settings" element={<AdminLayout><AdminSettings /></AdminLayout>} />
+              <Route path="/admin/analytics" element={<AdminLayout><Analytics /></AdminLayout>} />
+              <Route path="/admin/products/edit/:id" element={<AdminLayout><EditProduct /></AdminLayout>} />
+              <Route path="/admin/products/add" element={<AdminLayout><AddProduct /></AdminLayout>} />
+              <Route path="/admin/categories/add" element={<AdminLayout><AddCategory /></AdminLayout>} />
+              <Route path="/admin/create-discount" element={<AdminLayout><PromoCode /></AdminLayout>} />
+            </Route>
+
+            {/* 404 Page */}
+            <Route path="*" element={<Layout><div>404 Not Found</div></Layout>} />
+            
+          </Routes>
+        </CartProvider>
+      </AdminAuthProvider>
     </Router>
   );
 }

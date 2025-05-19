@@ -24,13 +24,28 @@ function AllProducts() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
 
+  // Function to get auth token
+  const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
+
   // Fetch products and categories from backend
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const token = getAuthToken();
+        
         const [productsRes, categoriesRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/all-products'),
-          axios.get('http://localhost:3000/api/categories')
+          axios.get('http://localhost:3000/api/all-products', {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get('http://localhost:3000/api/categories', {
+            headers: { Authorization: `Bearer ${token}` }
+          })
         ]);
         
         // Ensure products have populated categories
@@ -43,7 +58,7 @@ function AllProducts() {
         setCategories([{ _id: 'All', name: 'All' }, ...categoriesRes.data]);
         setLoading(false);
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to fetch data');
+        setError(err.response?.data?.error || err.message || 'Failed to fetch data');
         setLoading(false);
       }
     };
@@ -78,7 +93,10 @@ function AllProducts() {
     if (!productToDelete) return;
 
     try {
-      await axios.delete(`http://localhost:3000/api/products/${productToDelete}`);
+      const token = getAuthToken();
+      await axios.delete(`http://localhost:3000/api/products/${productToDelete}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setProducts(products.filter(product => product._id !== productToDelete));
       toast.success('Product deleted successfully');
     } catch (err) {
