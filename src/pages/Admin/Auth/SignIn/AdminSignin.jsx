@@ -56,45 +56,50 @@ function AdminSignin() {
     return Object.keys(newErrors).length === 0;
   };
 
+
+// HandleSubmit
 const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
 
-    setLoading(true);
-    try {
-      const response = await axios.post("http://localhost:3000/api/admin/signin", {
+  setLoading(true);
+  try {
+    const response = await axios.post(
+      'http://localhost:3000/api/admin/signin',
+      {
         email: formData.email,
         password: formData.password,
-      });
-
-      // Pass user data, token, and rememberMe to login
-      await login(response.data.user, response.data.token, formData.rememberMe);
-      toast.success("Logged in successfully");
-      navigate("/admin/dashboard", { replace: true });
-    } catch (err) {
-      const status = err.response?.status;
-      let errorMessage = "Login failed. Please try again.";
-
-      if (status === 401) {
-        errorMessage = "Invalid admin credentials";
-      } else if (status === 500) {
-        errorMessage = "Server error. Please try again later.";
       }
+    );
 
-      toast.error(errorMessage, {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-      });
-    } finally {
-      setLoading(false);
+    await login(response.data.token, formData.rememberMe);
+    navigate('/admin/dashboard', { replace: true });
+
+  } catch (err) {
+    const status = err.response?.status;
+    let errorMessage = 'Login failed. Please try again.';
+
+    if (status === 401) {
+      errorMessage = 'Invalid admin credentials';
+    } else if (status === 500) {
+      errorMessage = 'Server error. Please try again later.';
     }
-  };
+
+    toast.error(errorMessage, {
+      position: 'top-right',
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   return (

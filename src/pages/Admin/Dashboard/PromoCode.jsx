@@ -38,14 +38,29 @@ const PromoCodes = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [promoToDelete, setPromoToDelete] = useState(null);
 
+  // Function to get auth token
+  const getAuthToken = () => {
+    const token =
+      localStorage.getItem("adminToken") ||
+      sessionStorage.getItem("adminToken");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    return token;
+  };
+
   useEffect(() => {
     fetchPromoCodes();
   }, []);
 
   const fetchPromoCodes = async () => {
+    const token = getAuthToken();
     try {
       const response = await fetch(
-        "http://localhost:3000/api/admin/promo-codes"
+        "http://localhost:3000/api/admin/promo-codes",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
       const data = await response.json();
       if (response.ok) {
@@ -70,12 +85,14 @@ const PromoCodes = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const token = getAuthToken();
       const response = await fetch(
         "http://localhost:3000/api/admin/promo-codes",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(formData),
         }
@@ -108,12 +125,14 @@ const PromoCodes = () => {
 
   const togglePromoStatus = async (id, currentStatus) => {
     try {
+      const token = getAuthToken();
       const response = await fetch(
         `http://localhost:3000/api/admin/promo-codes/${id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ isActive: !currentStatus }),
         }
@@ -144,10 +163,14 @@ const PromoCodes = () => {
     if (!promoToDelete) return;
 
     try {
+      const token = getAuthToken()
       const response = await fetch(
         `http://localhost:3000/api/admin/promo-codes/${promoToDelete}`,
         {
           method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 

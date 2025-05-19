@@ -175,6 +175,7 @@ function Inventory() {
     }
   };
 
+  
   const refreshInventory = async () => {
     setLoading(true);
     setError(null);

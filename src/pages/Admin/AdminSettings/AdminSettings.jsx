@@ -17,11 +17,20 @@ function AdminSettings() {
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
 
+    // Function to get auth token
+  const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
+
   // Fetch current admin data
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = getAuthToken()
         const response = await axios.get('http://localhost:3000/api/admin/me', {
           headers: {
             Authorization: `Bearer ${token}`
@@ -61,7 +70,7 @@ function AdminSettings() {
     setIsLoading(true);
     
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken()
       const updateData = {
         email: formData.email
       };

@@ -36,30 +36,46 @@ const Analytics = () => {
   const [topProducts, setTopProducts] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
 
+  // Function to get auth token
+  const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
+
   // Fetch analytics data from backend
   useEffect(() => {
     const fetchAnalyticsData = async () => {
       try {
         setLoading(true);
         
-        // Fetch all data in parallel without authentication headers
-        const [statsRes, salesRes, trafficRes, productsRes, activityRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/analytics/stats', {
-            params: { range: timeRange }
-          }),
-          axios.get('http://localhost:3000/api/analytics/sales', {
-            params: { range: timeRange, groupBy: chartGrouping }
-          }),
-          axios.get('http://localhost:3000/api/analytics/traffic', {
-            params: { range: timeRange }
-          }),
-          axios.get('http://localhost:3000/api/analytics/top-products', {
-            params: { range: timeRange, limit: 5 }
-          }),
-          axios.get('http://localhost:3000/api/analytics/recent-activity', {
-            params: { limit: 5 }
-          })
-        ]);
+      const token = getAuthToken();
+
+    // Fetch all data in parallel with authentication headers
+    const [statsRes, salesRes, trafficRes, productsRes, activityRes] = await Promise.all([
+      axios.get('http://localhost:3000/api/analytics/stats', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { range: timeRange }
+      }),
+      axios.get('http://localhost:3000/api/analytics/sales', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { range: timeRange, groupBy: chartGrouping }
+      }),
+      axios.get('http://localhost:3000/api/analytics/traffic', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { range: timeRange }
+      }),
+      axios.get('http://localhost:3000/api/analytics/top-products', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { range: timeRange, limit: 5 }
+      }),
+      axios.get('http://localhost:3000/api/analytics/recent-activity', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { limit: 5 }
+      })
+    ]);
 
         // Transform stats data to match your UI format
         const transformedStats = [

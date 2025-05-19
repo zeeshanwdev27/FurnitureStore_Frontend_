@@ -10,13 +10,13 @@ function AdminLogout() {
   useEffect(() => {
     const performLogout = async () => {
       try {
-        logout(); // Clears admin and token
+        logout();
         toast.success("Logged out successfully");
-        navigate("/admin", { replace: true });
+        navigate("/admin");
       } catch (error) {
         console.error("Logout error:", error);
         toast.error("Failed to logout properly");
-        navigate("/admin", { replace: true });
+        navigate("/admin");
       }
     };
 

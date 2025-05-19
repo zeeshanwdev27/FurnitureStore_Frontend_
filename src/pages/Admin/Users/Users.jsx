@@ -30,11 +30,22 @@ function Users() {
   const roles = ['All', 'Admin', 'Editor', 'Customer'];
   const statuses = ['All', 'Active', 'Inactive', 'Suspended'];
 
+    const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
+
   // Fetch users from backend
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/admin/users');
+        const token = getAuthToken()
+        const response = await axios.get('http://localhost:3000/api/admin/users',{
+          headers: { Authorization: `Bearer ${token}` }
+        });
         setUsers(response.data.users);
         setLoading(false);
       } catch (err) {
@@ -76,12 +87,15 @@ function Users() {
   const handleSaveUser = async () => {
     try {
       let response;
+      const token = getAuthToken()
 
       if (isEditMode) {
         // Update existing user
         response = await axios.put(
           `http://localhost:3000/api/admin/users/${currentUser._id}`,
-          currentUser,
+          currentUser,{
+            headers: { Authorization: `Bearer ${token}` }
+          }
         );
 
         // If user is being suspended, show confirmation
@@ -102,7 +116,9 @@ function Users() {
         
         response = await axios.post(
           'http://localhost:3000/api/admin/users',
-          userData,
+          userData,{
+            headers: { Authorization: `Bearer ${token}` }
+          }
         );
         
         // Add to local state
@@ -116,8 +132,11 @@ function Users() {
   };
 
   const handleDeleteUser = async (id) => {
+    const token = getAuthToken()
     try {
-      await axios.delete(`http://localhost:3000/api/admin/users/${id}`);
+      await axios.delete(`http://localhost:3000/api/admin/users/${id}`,{
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       // Update local state
       setUsers(users.filter(user => user._id !== id));

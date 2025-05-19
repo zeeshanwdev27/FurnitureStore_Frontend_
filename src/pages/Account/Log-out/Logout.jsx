@@ -7,7 +7,7 @@ export default function Logout() {
   useEffect(() => {
     // Clear all auth-related data
     localStorage.removeItem('user');
-    // localStorage.removeItem('token');
+    localStorage.removeItem('token');
     
     // Redirect after cleanup
     navigate('/signin');

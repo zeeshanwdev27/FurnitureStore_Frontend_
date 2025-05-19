@@ -11,16 +11,22 @@ function AdminDashboard() {
 
   const navigate = useNavigate()
 
+  // Function to get auth token
+  const getAuthToken = () => {
+    const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    return token;
+  };
+
   // Fetch dashboard data
 useEffect(() => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
-      const token = localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      const token = getAuthToken();
 
       const [statsRes, ordersRes] = await Promise.all([
         axios.get('http://localhost:3000/api/analytics/stats', {

@@ -52,11 +52,24 @@ function Orders() {
   const payments = ["All", "Paid", "Pending", "Refunded", "Failed"];
   const shippingMethods = ["All", "Standard", "Express", "Free"];
 
+  const getAuthToken = () => {
+    const token =
+      localStorage.getItem("adminToken") ||
+      sessionStorage.getItem("adminToken");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+    return token;
+  };
+
   // Fetch all orders from admin endpoint
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = getAuthToken();
+        if (!token) {
+          throw new Error("No authentication token found");
+        }
         const response = await axios.get(
           "http://localhost:3000/api/admin/orders",
           {
@@ -125,7 +138,7 @@ function Orders() {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       await axios.put(
         `http://localhost:3000/api/admin/orders/${orderId}`,
         { status: newStatus },
@@ -545,7 +558,7 @@ function Orders() {
     if (!orderToDelete) return;
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       await axios.delete(
         `http://localhost:3000/api/admin/orders/${orderToDelete}`,
         {
