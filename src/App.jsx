@@ -34,6 +34,8 @@ import OrderConfirm from "./pages/Checkout/OrderConfirm.jsx";
 // Protected route
 import ProtectedRoute from "./components/Protected/ProtectedRoute.jsx";
 import AdminProtectedRoute from "./components/Protected/AdminProtectedRoute.jsx";
+import UserAuth from "./components/Protected/UserAuth.jsx"
+import AdminAuth from "./components/Protected/AdminAuth.jsx"
 
 // Admin Routes
 import AdminLayout from "./components/Layout/AdminLayout.jsx";
@@ -78,8 +80,8 @@ function App() {
             <Route path="/category/:categoryName" element={<Layout><CategoryProducts /></Layout>} />
             <Route path="/product/:id" element={<Layout><ProductDetail /></Layout>} />
             <Route path="/search" element={<Layout><SearchResults /></Layout>} />
-            <Route path="/signin" element={<SignIn />} />
-            <Route path="/signup" element={<SignUp />} />
+            <Route path="/signin" element={<UserAuth><SignIn /></UserAuth>} />
+            <Route path="/signup" element={<UserAuth><SignUp /></UserAuth>} />
             <Route path="/logout" element={<Logout />} />
 
             {/* Protected routes */}
@@ -96,7 +98,7 @@ function App() {
             } />
 
             {/* Admin Routes */}
-            <Route path="/admin" element={<AdminSignin />} />
+            <Route path="/admin" element={<AdminAuth><AdminSignin /></AdminAuth>} />
             <Route path="/admin/logout" element={<AdminLogout />} />
 
             {/* Protected Admin Routes */}

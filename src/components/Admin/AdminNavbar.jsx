@@ -48,7 +48,7 @@ function AdminNavbar() {
           {sidebarOpen ? (
             <h1 className="text-xl font-bold">Admin Panel</h1>
           ) : (
-            <h1 className="text-xl font-bold">FA</h1>
+            <h1 className="text-xl font-bold">AP</h1>
           )}
           <button 
             onClick={() => setSidebarOpen(!sidebarOpen)}
