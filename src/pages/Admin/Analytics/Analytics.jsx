@@ -23,7 +23,7 @@ import {
 } from 'recharts';
 import axios from 'axios';
 
-const Analytics = () => {
+const admin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('Last 7 Days');
@@ -45,9 +45,9 @@ const Analytics = () => {
     return token;
   };
 
-  // Fetch analytics data from backend
+  // Fetch admin data from backend
   useEffect(() => {
-    const fetchAnalyticsData = async () => {
+    const fetchadminData = async () => {
       try {
         setLoading(true);
         
@@ -55,23 +55,23 @@ const Analytics = () => {
 
     // Fetch all data in parallel with authentication headers
     const [statsRes, salesRes, trafficRes, productsRes, activityRes] = await Promise.all([
-      axios.get('http://localhost:3000/api/analytics/stats', {
+      axios.get('http://localhost:3000/api/admin/stats', {
         headers: { Authorization: `Bearer ${token}` },
         params: { range: timeRange }
       }),
-      axios.get('http://localhost:3000/api/analytics/sales', {
+      axios.get('http://localhost:3000/api/admin/sales', {
         headers: { Authorization: `Bearer ${token}` },
         params: { range: timeRange, groupBy: chartGrouping }
       }),
-      axios.get('http://localhost:3000/api/analytics/traffic', {
+      axios.get('http://localhost:3000/api/admin/traffic', {
         headers: { Authorization: `Bearer ${token}` },
         params: { range: timeRange }
       }),
-      axios.get('http://localhost:3000/api/analytics/top-products', {
+      axios.get('http://localhost:3000/api/admin/top-products', {
         headers: { Authorization: `Bearer ${token}` },
         params: { range: timeRange, limit: 5 }
       }),
-      axios.get('http://localhost:3000/api/analytics/recent-activity', {
+      axios.get('http://localhost:3000/api/admin/recent-activity', {
         headers: { Authorization: `Bearer ${token}` },
         params: { limit: 5 }
       })
@@ -116,14 +116,14 @@ const Analytics = () => {
         setRecentActivity(activityRes.data);
         setError(null);
       } catch (err) {
-        console.error('Failed to fetch analytics data:', err);
-        setError('Failed to load analytics data. Please try again.');
+        console.error('Failed to fetch admin data:', err);
+        setError('Failed to load admin data. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAnalyticsData();
+    fetchadminData();
   }, [timeRange, chartGrouping]);
 
   if (loading) {
@@ -147,7 +147,7 @@ const Analytics = () => {
   return (
     <div className="p-8 transition-all duration-300">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Analytics Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-800">admin Dashboard</h1>
         <div className="flex items-center space-x-2">
           <FiCalendar className="text-gray-500" />
           <select 
@@ -326,4 +326,4 @@ const Analytics = () => {
   );
 };
 
-export default Analytics;
+export default admin;

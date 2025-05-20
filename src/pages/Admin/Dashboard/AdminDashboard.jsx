@@ -29,7 +29,7 @@ useEffect(() => {
       const token = getAuthToken();
 
       const [statsRes, ordersRes] = await Promise.all([
-        axios.get('http://localhost:3000/api/analytics/stats', {
+        axios.get('http://localhost:3000/api/admin/stats', {
           params: { range: 'Last 7 Days' },
           headers: { Authorization: `Bearer ${token}` }
         }),
