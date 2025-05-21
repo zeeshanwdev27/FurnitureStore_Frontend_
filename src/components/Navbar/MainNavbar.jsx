@@ -25,12 +25,13 @@ function MainNavbar() {
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   const navigate = useNavigate();
+    const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Fetch categories from API
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await axios.get('http://localhost:3000/api/categories');
+        const response = await axios.get(`${API_BASE_URL}/api/categories`);
         setCategories(response.data);
         setLoadingCategories(false);
       } catch (err) {

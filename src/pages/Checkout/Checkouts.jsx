@@ -14,6 +14,7 @@ function Checkouts() {
   } = useCart();
 
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -55,7 +56,7 @@ function Checkouts() {
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/promo-codes/validate?code=${promoCode}&subtotal=${contextSubtotal}`);
+      const response = await fetch(`${API_BASE_URL}/api/promo-codes/validate?code=${promoCode}&subtotal=${contextSubtotal}`);
       const data = await response.json();
 
       if (!response.ok) {
@@ -163,7 +164,7 @@ function Checkouts() {
         throw new Error("Please log in to complete your purchase");
       }
   
-      const response = await fetch('http://localhost:3000/api/orders', {
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -9,12 +9,13 @@ function AllProducts() {
   
 
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true)
-        const response = await fetch("http://localhost:3000/api/all-products")
+        const response = await fetch(`${API_BASE_URL}/api/all-products`)
         const data = await response.json()
         if (!response.ok) throw new Error(data.error || "Failed to fetch products")
         setProducts(data)

@@ -11,13 +11,14 @@ function CategoryProducts() {
   const [category, setCategory] = useState(null); // Add state for category details
 
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
         setLoading(true);
         const response = await axios.get(
-          `http://localhost:3000/api/category/${categoryName}`
+          `${API_BASE_URL}/api/category/${categoryName}`
         );
         
         setProducts(response.data);

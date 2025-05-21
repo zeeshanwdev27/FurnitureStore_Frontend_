@@ -10,6 +10,7 @@ function ProductDetail() {
   const [error, setError] = useState(null);
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,7 +18,7 @@ function ProductDetail() {
         setLoading(true);
         
         // Fetch main product
-        const productResponse = await fetch(`http://localhost:3000/api/product/${id}`);
+        const productResponse = await fetch(`${API_BASE_URL}/api/product/${id}`);
         if (!productResponse.ok) {
           throw new Error('Failed to fetch product');
         }
@@ -27,7 +28,7 @@ function ProductDetail() {
         // Fetch suggested products
         if (productData.category) {
           const suggestedResponse = await fetch(
-            `http://localhost:3000/api/category/${productData.category._id || productData.category}`
+            `${API_BASE_URL}/api/category/${productData.category._id || productData.category}`
           );
           if (!suggestedResponse.ok) {
             throw new Error('Failed to fetch suggested products');

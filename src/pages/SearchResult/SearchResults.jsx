@@ -8,6 +8,7 @@ function SearchResults() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
   const query = new URLSearchParams(location.search).get("q");
 
 useEffect(() => {
@@ -18,7 +19,7 @@ useEffect(() => {
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:3000/api/search?query=${query}`);
+      const response = await fetch(`${API_BASE_URL}/api/search?query=${query}`);
       const data = await response.json();
       setProducts(data.products || []);
     } catch (err) {

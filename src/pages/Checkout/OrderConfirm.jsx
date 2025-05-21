@@ -13,6 +13,7 @@ function OrderConfirm() {
   const [error, setError] = useState(null);
   const { clearCart } = useCart();
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -26,7 +27,7 @@ function OrderConfirm() {
         }
   
         const response = await fetch(
-          `http://localhost:3000/api/orders/${orderId}`,
+          `${API_BASE_URL}/api/orders/${orderId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
