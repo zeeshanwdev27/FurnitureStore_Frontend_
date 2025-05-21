@@ -44,8 +44,8 @@ function Users() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const token = getAuthToken()
-        const response = await axios.get('http://localhost:3000/api/admin/users',{
+        const token = getAuthToken();
+        const response = await axios.get('http://localhost:3000/api/admin/users', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUsers(response.data.users);
@@ -90,13 +90,13 @@ function Users() {
   const handleSaveUser = async () => {
     try {
       let response;
-      const token = getAuthToken()
+      const token = getAuthToken();
 
       if (isEditMode) {
         // Update existing user
         response = await axios.put(
           `http://localhost:3000/api/admin/users/${currentUser._id}`,
-          currentUser,{
+          currentUser, {
             headers: { Authorization: `Bearer ${token}` }
           }
         );
@@ -121,7 +121,7 @@ function Users() {
         
         response = await axios.post(
           'http://localhost:3000/api/admin/users',
-          userData,{
+          userData, {
             headers: { Authorization: `Bearer ${token}` }
           }
         );
@@ -144,9 +144,9 @@ function Users() {
       return;
     }
     
-    const token = getAuthToken()
+    const token = getAuthToken();
     try {
-      await axios.delete(`http://localhost:3000/api/admin/users/${id}`,{
+      await axios.delete(`http://localhost:3000/api/admin/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
@@ -171,7 +171,7 @@ function Users() {
 
   if (loading) {
     return (
-      <div className="p-8 flex justify-center items-center h-screen">
+      <div className="p-4 sm:p-8 flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
       </div>
     );
@@ -179,7 +179,7 @@ function Users() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">Error: </strong>
           <span className="block sm:inline">{error}</span>
@@ -189,7 +189,7 @@ function Users() {
   }
 
   return (
-    <div className="p-8 transition-all duration-300">
+    <div className="p-4 sm:p-8 transition-all duration-300 lg:mt-0 mt-8">
       {/* Toast Container */}
       <ToastContainer
         position="top-right"
@@ -203,11 +203,11 @@ function Users() {
         pauseOnHover
       />
       
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">User Management</h1>
         <button 
           onClick={handleAddUser}
-          className="flex items-center bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          className="flex items-center justify-center w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
         >
           <FiUserPlus className="mr-2" />
           Add User
@@ -215,45 +215,45 @@ function Users() {
       </div>
 
       {/* Users Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6 flex items-start">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 flex items-start">
           <div className="rounded-full p-3 mr-4 bg-blue-100 text-blue-600">
-            <FiUser className="text-2xl" />
+            <FiUser className="text-xl sm:text-2xl" />
           </div>
           <div>
-            <p className="text-gray-500 text-sm">Total Users</p>
-            <p className="text-2xl font-bold my-1">{users.length}</p>
+            <p className="text-gray-500 text-xs sm:text-sm">Total Users</p>
+            <p className="text-xl sm:text-2xl font-bold my-1">{users.length}</p>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6 flex items-start">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 flex items-start">
           <div className="rounded-full p-3 mr-4 bg-green-100 text-green-600">
-            <BsPersonCheck className="text-2xl" />
+            <BsPersonCheck className="text-xl sm:text-2xl" />
           </div>
           <div>
-            <p className="text-gray-500 text-sm">Active</p>
-            <p className="text-2xl font-bold my-1">
+            <p className="text-gray-500 text-xs sm:text-sm">Active</p>
+            <p className="text-xl sm:text-2xl font-bold my-1">
               {users.filter(user => user.status === 'Active').length}
             </p>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6 flex items-start">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 flex items-start">
           <div className="rounded-full p-3 mr-4 bg-gray-100 text-gray-600">
-            <BsPersonX className="text-2xl" />
+            <BsPersonX className="text-xl sm:text-2xl" />
           </div>
           <div>
-            <p className="text-gray-500 text-sm">Inactive</p>
-            <p className="text-2xl font-bold my-1">
+            <p className="text-gray-500 text-xs sm:text-sm">Inactive</p>
+            <p className="text-xl sm:text-2xl font-bold my-1">
               {users.filter(user => user.status === 'Inactive').length}
             </p>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow p-6 flex items-start">
+        <div className="bg-white rounded-lg shadow p-4 sm:p-6 flex items-start">
           <div className="rounded-full p-3 mr-4 bg-red-100 text-red-600">
-            <BsShieldLock className="text-2xl" />
+            <BsShieldLock className="text-xl sm:text-2xl" />
           </div>
           <div>
-            <p className="text-gray-500 text-sm">Suspended</p>
-            <p className="text-2xl font-bold my-1">
+            <p className="text-gray-500 text-xs sm:text-sm">Suspended</p>
+            <p className="text-xl sm:text-2xl font-bold my-1">
               {users.filter(user => user.status === 'Suspended').length}
             </p>
           </div>
@@ -262,7 +262,7 @@ function Users() {
 
       {/* Search and Filter Bar */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {/* Search Input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -271,42 +271,42 @@ function Users() {
             <input
               type="text"
               placeholder="Search users by name or email..."
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-
-          {/* Role Filter */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FiUser className="text-gray-400" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Role Filter */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiUser className="text-gray-400" />
+              </div>
+              <select
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none text-sm"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+              >
+                {roles.map(role => (
+                  <option key={role} value={role}>{role}</option>
+                ))}
+              </select>
             </div>
-            <select
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-            >
-              {roles.map(role => (
-                <option key={role} value={role}>{role}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Status Filter */}
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FiFilter className="text-gray-400" />
+            {/* Status Filter */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <FiFilter className="text-gray-400" />
+              </div>
+              <select
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none text-sm"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                {statuses.map(status => (
+                  <option key={status} value={status}>{status}</option>
+                ))}
+              </select>
             </div>
-            <select
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-            >
-              {statuses.map(status => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
           </div>
         </div>
       </div>
@@ -314,7 +314,7 @@ function Users() {
       {/* Users Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-gray-200 hidden md:table">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
@@ -385,15 +385,71 @@ function Users() {
               )}
             </tbody>
           </table>
+          {/* Mobile Card View */}
+          <div className="md:hidden">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map(user => (
+                <div key={user._id} className="border-b border-gray-200 p-4 hover:bg-gray-50">
+                  <div className="flex items-center mb-2">
+                    <div className="flex-shrink-0 h-8 w-8 bg-gray-200 rounded-full flex items-center justify-center">
+                      <FiUser className="text-gray-500" />
+                    </div>
+                    <div className="ml-3">
+                      <div className="text-sm font-medium text-gray-900">{user.username}</div>
+                      <div className="text-xs text-gray-500">{user.email}</div>
+                    </div>
+                    <div className="ml-auto flex space-x-2">
+                      <button 
+                        onClick={() => handleEditUser(user)}
+                        className="text-indigo-600 hover:text-indigo-900"
+                      >
+                        <FiEdit2 size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteUser(user._id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
+                    <div className="flex items-center">
+                      <span className="text-gray-500 mr-1">Role:</span> 
+                      <span className="font-medium">{user.role || 'Customer'}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-gray-500 mr-1">Status:</span>
+                      <span className={`font-medium ${user.status === 'Suspended' ? 'text-red-600' : ''}`}>
+                        {user.status || 'Active'}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-gray-500 mr-1">Joined:</span> 
+                      <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="text-gray-500 mr-1">Last Login:</span> 
+                      <span>{user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="p-4 text-center text-sm text-gray-500">
+                No users found matching your criteria
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* User Add/Edit Modal */}
       {showUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-4 sm:p-6 w-full max-w-md">
             <div className="flex justify-between items-start mb-4">
-              <h2 className="text-xl font-bold">
+              <h2 className="text-lg sm:text-xl font-bold">
                 {isEditMode ? 'Edit User' : 'Add New User'}
               </h2>
               <button 
@@ -409,7 +465,7 @@ function Users() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
                 <input
                   type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   value={currentUser?.username || ''}
                   onChange={(e) => setCurrentUser({...currentUser, username: e.target.value})}
                 />
@@ -419,17 +475,17 @@ function Users() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                 <input
                   type="email"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                   value={currentUser?.email || ''}
                   onChange={(e) => setCurrentUser({...currentUser, email: e.target.value})}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     value={currentUser?.role || 'Customer'}
                     onChange={(e) => setCurrentUser({...currentUser, role: e.target.value})}
                   >
@@ -442,7 +498,7 @@ function Users() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     value={currentUser?.status || 'Active'}
                     onChange={(e) => setCurrentUser({...currentUser, status: e.target.value})}
                   >
@@ -458,7 +514,7 @@ function Users() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                   <input
                     type="password"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
                     placeholder="Set password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}

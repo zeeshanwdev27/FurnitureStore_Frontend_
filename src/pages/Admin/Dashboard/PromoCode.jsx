@@ -202,7 +202,7 @@ const PromoCodes = () => {
     );
 
   return (
-    <div className="p-6">
+    <div className="p-6 lg:mt-0 mt-8">
       <ToastContainer
         position="top-right"
         autoClose={5000}

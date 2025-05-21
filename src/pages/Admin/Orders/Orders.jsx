@@ -585,7 +585,7 @@ function Orders() {
   };
 
   return (
-    <div className="p-8 transition-all duration-300">
+    <div className="p-8 transition-all duration-300 lg:mt-0 mt-6">
       {/* Toast */}
       <ToastContainer
         position="top-right"

@@ -106,25 +106,25 @@ function AdminSettings() {
   };
 
   return (
-    <div className="p-8 transition-all duration-300">
+    <div className="p-4 sm:p-8 transition-all duration-300 lg:mt-0 mt-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">Admin Profile Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Admin Profile Settings</h1>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6 max-w-2xl">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6 w-full max-w-2xl">
         {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md text-sm sm:text-base">
             {error}
           </div>
         )}
 
         {successMessage && (
-          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md">
+          <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md text-sm sm:text-base">
             {successMessage}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
           <div>
             <label htmlFor="email" className="text-sm font-medium text-gray-700 mb-1 flex items-center">
               <FiMail className="mr-2" /> Email Address
@@ -133,7 +133,7 @@ function AdminSettings() {
               type="email"
               id="email"
               name="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
               value={formData.email}
               onChange={handleChange}
               required
@@ -141,12 +141,12 @@ function AdminSettings() {
           </div>
 
           <div className="pt-4 border-t border-gray-200">
-            <h3 className="text-lg font-medium text-gray-800 flex items-center">
+            <h3 className="text-base sm:text-lg font-medium text-gray-800 flex items-center">
               <FiLock className="mr-2" /> Change Password
             </h3>
-            <p className="text-sm text-gray-500 mb-4">Leave blank to keep current password</p>
+            <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4">Leave blank to keep current password</p>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <div>
                 <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
                   Current Password
@@ -156,7 +156,7 @@ function AdminSettings() {
                     type={showCurrentPassword ? "text" : "password"}
                     id="currentPassword"
                     name="currentPassword"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                     value={formData.currentPassword}
                     onChange={handleChange}
                   />
@@ -165,7 +165,7 @@ function AdminSettings() {
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                   >
-                    {showCurrentPassword ? <FiEyeOff /> : <FiEye />}
+                    {showCurrentPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
               </div>
@@ -179,7 +179,7 @@ function AdminSettings() {
                     type={showNewPassword ? "text" : "password"}
                     id="newPassword"
                     name="newPassword"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                     value={formData.newPassword}
                     onChange={handleChange}
                     minLength="6"
@@ -189,7 +189,7 @@ function AdminSettings() {
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     onClick={() => setShowNewPassword(!showNewPassword)}
                   >
-                    {showNewPassword ? <FiEyeOff /> : <FiEye />}
+                    {showNewPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
               </div>
@@ -203,7 +203,7 @@ function AdminSettings() {
                     type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
                     name="confirmPassword"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm sm:text-base"
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     minLength="6"
@@ -213,7 +213,7 @@ function AdminSettings() {
                     className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+                    {showConfirmPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                   </button>
                 </div>
               </div>
@@ -224,7 +224,7 @@ function AdminSettings() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed"
+              className="flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               <FiSave className="mr-2" />
               {isLoading ? 'Saving...' : 'Save Changes'}
