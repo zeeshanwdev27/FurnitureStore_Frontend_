@@ -14,6 +14,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function AllProducts() {
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,6 +24,8 @@ function AllProducts() {
   const [categories, setCategories] = useState([{ _id: 'All', name: 'All' }]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState(null);
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Function to get auth token
   const getAuthToken = () => {
@@ -40,10 +43,10 @@ function AllProducts() {
         const token = getAuthToken();
         
         const [productsRes, categoriesRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/all-products', {
+          axios.get(`${API_BASE_URL}/api/all-products`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get('http://localhost:3000/api/categories', {
+          axios.get(`${API_BASE_URL}/api/categories`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -94,7 +97,7 @@ function AllProducts() {
 
     try {
       const token = getAuthToken();
-      await axios.delete(`http://localhost:3000/api/products/${productToDelete}`, {
+      await axios.delete(`${API_BASE_URL}/api/products/${productToDelete}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProducts(products.filter(product => product._id !== productToDelete));

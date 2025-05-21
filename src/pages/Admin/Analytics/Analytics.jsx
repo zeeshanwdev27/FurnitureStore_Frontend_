@@ -35,6 +35,7 @@ const admin = () => {
   const [trafficData, setTrafficData] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Function to get auth token
   const getAuthToken = () => {
@@ -55,23 +56,23 @@ const admin = () => {
 
         // Fetch all data in parallel with authentication headers
         const [statsRes, salesRes, trafficRes, productsRes, activityRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/admin/stats', {
+          axios.get(`${API_BASE_URL}/api/admin/stats`, {
             headers: { Authorization: `Bearer ${token}` },
             params: { range: timeRange }
           }),
-          axios.get('http://localhost:3000/api/admin/sales', {
+          axios.get(`${API_BASE_URL}/api/admin/sales`, {
             headers: { Authorization: `Bearer ${token}` },
             params: { range: timeRange, groupBy: chartGrouping }
           }),
-          axios.get('http://localhost:3000/api/admin/traffic', {
+          axios.get(`${API_BASE_URL}/api/admin/traffic`, {
             headers: { Authorization: `Bearer ${token}` },
             params: { range: timeRange }
           }),
-          axios.get('http://localhost:3000/api/admin/top-products', {
+          axios.get(`${API_BASE_URL}/api/admin/top-products`, {
             headers: { Authorization: `Bearer ${token}` },
             params: { range: timeRange, limit: 5 }
           }),
-          axios.get('http://localhost:3000/api/admin/recent-activity', {
+          axios.get(`${API_BASE_URL}/api/admin/recent-activity`, {
             headers: { Authorization: `Bearer ${token}` },
             params: { limit: 5 }
           })

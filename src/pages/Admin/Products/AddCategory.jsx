@@ -6,12 +6,15 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function AddCategory() {
-  const navigate = useNavigate();
+
   const [category, setCategory] = useState("");
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Function to get auth token
   const getAuthToken = () => {
@@ -30,7 +33,7 @@ function AddCategory() {
       try {
         const token = getAuthToken();
         const response = await axios.get(
-          "http://localhost:3000/api/categories",
+          `${API_BASE_URL}/api/categories`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -58,14 +61,14 @@ function AddCategory() {
     try {
       const token = getAuthToken();
       await axios.post(
-        "http://localhost:3000/api/categories",
+        `${API_BASE_URL}/api/categories`,
         { name: category },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Category added successfully!");
       setCategory("");
       // Refresh categories list
-      const response = await axios.get("http://localhost:3000/api/categories", {
+      const response = await axios.get(`${API_BASE_URL}/api/categories`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCategories(response.data);
@@ -94,7 +97,7 @@ function AddCategory() {
       );
 
       await axios.delete(
-        `http://localhost:3000/api/categories/${selectedCategory}`,
+        `${API_BASE_URL}/api/categories/${selectedCategory}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -105,7 +108,7 @@ function AddCategory() {
       );
       setSelectedCategory("");
       // Refresh categories list
-      const response = await axios.get("http://localhost:3000/api/categories", {
+      const response = await axios.get(`${API_BASE_URL}/api/categories`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setCategories(response.data);

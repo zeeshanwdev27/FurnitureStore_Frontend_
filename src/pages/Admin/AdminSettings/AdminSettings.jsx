@@ -16,6 +16,7 @@ function AdminSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
     // Function to get auth token
   const getAuthToken = () => {
@@ -31,7 +32,7 @@ function AdminSettings() {
     const fetchAdminData = async () => {
       try {
         const token = getAuthToken()
-        const response = await axios.get('http://localhost:3000/api/admin/me', {
+        const response = await axios.get(`${API_BASE_URL}/api/admin/me`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -82,7 +83,7 @@ function AdminSettings() {
       }
 
       await axios.put(
-        'http://localhost:3000/api/admin/update-profile',
+        `${API_BASE_URL}/api/admin/update-profile`,
         updateData,
         {
           headers: {

@@ -28,6 +28,8 @@ function Users() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [password, setPassword] = useState('');
 
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
+
   // Filter options
   const roles = ['All', 'Admin', 'Editor', 'Customer'];
   const statuses = ['All', 'Active', 'Inactive', 'Suspended'];
@@ -45,7 +47,7 @@ function Users() {
     const fetchUsers = async () => {
       try {
         const token = getAuthToken();
-        const response = await axios.get('http://localhost:3000/api/admin/users', {
+        const response = await axios.get(`${API_BASE_URL}/api/admin/users`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUsers(response.data.users);
@@ -95,7 +97,7 @@ function Users() {
       if (isEditMode) {
         // Update existing user
         response = await axios.put(
-          `http://localhost:3000/api/admin/users/${currentUser._id}`,
+          `${API_BASE_URL}/api/admin/users/${currentUser._id}`,
           currentUser, {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -120,7 +122,7 @@ function Users() {
         };
         
         response = await axios.post(
-          'http://localhost:3000/api/admin/users',
+          `${API_BASE_URL}/api/admin/users`,
           userData, {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -146,7 +148,7 @@ function Users() {
     
     const token = getAuthToken();
     try {
-      await axios.delete(`http://localhost:3000/api/admin/users/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/users/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

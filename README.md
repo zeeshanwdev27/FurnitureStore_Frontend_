@@ -10,3 +10,8 @@ Depedencies i Install in Fronend:
 9.  npm install react-icons
 10. npm i recharts (Used in Admin/Analytics/Analytics.jsx)
 11. npm i date-fns
+
+
+
+ENV:
+VITE_API_URL="http://localhost:3000"

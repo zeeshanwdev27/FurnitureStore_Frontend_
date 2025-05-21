@@ -27,6 +27,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 function Orders() {
+
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -39,6 +40,8 @@ function Orders() {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState(null);
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Filter options
   const statuses = [
@@ -71,7 +74,7 @@ function Orders() {
           throw new Error("No authentication token found");
         }
         const response = await axios.get(
-          "http://localhost:3000/api/admin/orders",
+          `${API_BASE_URL}/api/admin/orders`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -140,7 +143,7 @@ function Orders() {
     try {
       const token = getAuthToken();
       await axios.put(
-        `http://localhost:3000/api/admin/orders/${orderId}`,
+        `${API_BASE_URL}/api/admin/orders/${orderId}`,
         { status: newStatus },
         {
           headers: {
@@ -560,7 +563,7 @@ function Orders() {
     try {
       const token = getAuthToken();
       await axios.delete(
-        `http://localhost:3000/api/admin/orders/${orderToDelete}`,
+        `${API_BASE_URL}/api/admin/orders/${orderToDelete}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -21,6 +21,7 @@ import {
 } from "react-icons/fa";
 
 const PromoCodes = () => {
+
   const [promoCodes, setPromoCodes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
@@ -37,6 +38,8 @@ const PromoCodes = () => {
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [promoToDelete, setPromoToDelete] = useState(null);
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Function to get auth token
   const getAuthToken = () => {
@@ -57,7 +60,7 @@ const PromoCodes = () => {
     const token = getAuthToken();
     try {
       const response = await fetch(
-        "http://localhost:3000/api/admin/promo-codes",
+        `${API_BASE_URL}/api/admin/promo-codes`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -87,7 +90,7 @@ const PromoCodes = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        "http://localhost:3000/api/admin/promo-codes",
+        `${API_BASE_URL}/api/admin/promo-codes`,
         {
           method: "POST",
           headers: {
@@ -127,7 +130,7 @@ const PromoCodes = () => {
     try {
       const token = getAuthToken();
       const response = await fetch(
-        `http://localhost:3000/api/admin/promo-codes/${id}`,
+        `${API_BASE_URL}/api/admin/promo-codes/${id}`,
         {
           method: "PUT",
           headers: {
@@ -165,7 +168,7 @@ const PromoCodes = () => {
     try {
       const token = getAuthToken()
       const response = await fetch(
-        `http://localhost:3000/api/admin/promo-codes/${promoToDelete}`,
+        `${API_BASE_URL}/api/admin/promo-codes/${promoToDelete}`,
         {
           method: "DELETE",
           headers: {
@@ -273,7 +276,7 @@ const PromoCodes = () => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 required
-                placeholder="SUMMER2023"
+                placeholder="SUMMER2025"
               />
             </div>
 

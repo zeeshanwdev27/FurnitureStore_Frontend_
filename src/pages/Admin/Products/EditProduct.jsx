@@ -6,6 +6,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function ProductForm() {
+
   const { id } = useParams();
   const navigate = useNavigate();
   const isEditMode = Boolean(id);
@@ -18,10 +19,11 @@ function ProductForm() {
     stock: '0',
     image: { url: '', filename: '' }
   });
-  
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(isEditMode);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Function to get auth token
   const getAuthToken = () => {
@@ -41,14 +43,14 @@ function ProductForm() {
         const token = getAuthToken();
         
         // Fetch categories first
-        const categoriesResponse = await axios.get('http://localhost:3000/api/categories', {
+        const categoriesResponse = await axios.get(`${API_BASE_URL}/api/categories`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCategories(categoriesResponse.data);
 
         if (isEditMode) {
           // Then fetch product data if in edit mode
-          const productResponse = await axios.get(`http://localhost:3000/api/product/${id}`, {
+          const productResponse = await axios.get(`${API_BASE_URL}/api/product/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           
@@ -120,13 +122,13 @@ function ProductForm() {
       };
 
       if (isEditMode) {
-        await axios.put(`http://localhost:3000/api/products/${id}`, productData, {
+        await axios.put(`${API_BASE_URL}/api/products/${id}`, productData, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success('Product updated successfully!');
         setTimeout(() => navigate('/admin/allproducts'), 1500);
       } else {
-        await axios.post('http://localhost:3000/api/products', productData, {
+        await axios.post(`${API_BASE_URL}/api/products`, productData, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success('Product created successfully!');

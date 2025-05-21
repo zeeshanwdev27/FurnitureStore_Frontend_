@@ -12,6 +12,7 @@ export const AdminAuthProvider = ({ children }) => {
   const [admin, setAdmin] = useState(null);
    const [isVerifying, setIsVerifying] = useState(true);
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Check for existing valid token on initial load
   useEffect(() => {
@@ -25,7 +26,7 @@ export const AdminAuthProvider = ({ children }) => {
 
       try {
         // Verify token with backend
-        const response = await axios.get('http://localhost:3000/api/admin/verify-token', {
+        const response = await axios.get(`${API_BASE_URL}/api/admin/verify-token`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

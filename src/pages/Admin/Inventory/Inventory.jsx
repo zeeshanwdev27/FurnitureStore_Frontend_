@@ -16,6 +16,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function Inventory() {
+
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,6 +28,8 @@ function Inventory() {
   const [restockQuantity, setRestockQuantity] = useState('');
   const [restockError, setRestockError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Function to get auth token
   const getAuthToken = () => {
@@ -42,7 +45,7 @@ function Inventory() {
     const fetchInventory = async () => {
       try {
         const token = getAuthToken();
-        const response = await axios.get('http://localhost:3000/api/all-products', {
+        const response = await axios.get(`${API_BASE_URL}/api/all-products`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -124,7 +127,7 @@ function Inventory() {
 
       // Use dedicated stock endpoint with authentication
       const response = await axios.put(
-        `http://localhost:3000/api/products/${restockItem.id}/stock`,
+        `${API_BASE_URL}/api/products/${restockItem.id}/stock`,
         { stock: updatedStock },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -178,7 +181,7 @@ function Inventory() {
     setError(null);
     try {
       const token = getAuthToken();
-      const response = await axios.get('http://localhost:3000/api/all-products', {
+      const response = await axios.get(`${API_BASE_URL}/api/all-products`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

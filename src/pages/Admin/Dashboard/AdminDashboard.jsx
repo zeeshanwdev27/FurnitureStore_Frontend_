@@ -10,6 +10,7 @@ function AdminDashboard() {
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Function to get auth token
   const getAuthToken = () => {
@@ -29,11 +30,11 @@ function AdminDashboard() {
         const token = getAuthToken();
 
         const [statsRes, ordersRes] = await Promise.all([
-          axios.get('http://localhost:3000/api/admin/stats', {
+          axios.get(`${API_BASE_URL}/api/admin/stats`, {
             params: { range: 'Last 7 Days' },
             headers: { Authorization: `Bearer ${token}` }
           }),
-          axios.get('http://localhost:3000/api/admin/orders', {
+          axios.get(`${API_BASE_URL}/api/admin/orders`, {
             params: { limit: 5 },
             headers: { Authorization: `Bearer ${token}` }
           })

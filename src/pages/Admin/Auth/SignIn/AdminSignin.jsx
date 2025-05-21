@@ -10,6 +10,7 @@ import { useAdminAuth } from "../../../../context/AdminAuthContext.jsx";
 function AdminSignin() {
   const { login } = useAdminAuth();
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   const [formData, setFormData] = useState({
     email: '',
@@ -66,7 +67,7 @@ const handleSubmit = async (e) => {
   setLoading(true);
   try {
     const response = await axios.post(
-      'http://localhost:3000/api/admin/signin',
+      `${API_BASE_URL}/api/admin/signin`,
       {
         email: formData.email,
         password: formData.password,

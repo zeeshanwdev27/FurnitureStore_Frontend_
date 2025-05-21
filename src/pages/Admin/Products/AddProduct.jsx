@@ -7,8 +7,6 @@ import "react-toastify/dist/ReactToastify.css";
 
 function AddProduct() {
   const [categories, setCategories] = useState([]);
-  const navigate = useNavigate();
-
   const [product, setProduct] = useState({
     name: "",
     description: "",
@@ -18,6 +16,9 @@ function AddProduct() {
     image: { url: "", filename: "" },
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_URL;
 
   // Function to get auth token
   const getAuthToken = () => {
@@ -38,7 +39,7 @@ function AddProduct() {
       try {
         const token = getAuthToken();
         const response = await axios.get(
-          "http://localhost:3000/api/categories",
+          `${API_BASE_URL}/api/categories`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -101,7 +102,7 @@ function AddProduct() {
       };
 
       await axios.post(
-        "http://localhost:3000/api/products",
+        `${API_BASE_URL}/api/products`,
         productData,
         {
           headers: { Authorization: `Bearer ${token}` },
